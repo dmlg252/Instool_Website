@@ -55,4 +55,4 @@ Trang web này được xây dựng riêng để chạy trực tiếp trên **Cl
    * **Cloudflare API Token:** Mã Token vừa tạo.
    * **Địa chỉ Website Sale:** Đường dẫn trang Pages của bạn (ví dụ: `https://instool-sales-portal.pages.dev`).
 3. Bấm **Kiểm tra kết nối D1** ➔ Bấm **Lưu cài đặt**.
-4. Giờ đây bạn chỉ cần vào **Quản lý khách hàng**, chọn các lead chất lượng và bấm **"Đẩy lên Dữ liệu trực tuyến"** là team Sale có thể bắt đầu làm việc ngay!
+4. Giờ đây bạn chỉ cần vào **Quản lý khách hàng**, chọn các lead chất lượng và bấm **"Đẩy lên Dữ liệu trực tuyến"** là team Sale có thể bắt đầu làm việc ngay! .
