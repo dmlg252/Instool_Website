@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instool — Cổng Quản Lý Khách Hàng (Sale Portal)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f5f5f5; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+    </style>
+</head>
+<body class="bg-neutral-100 text-neutral-900 font-sans antialiased h-screen flex flex-col overflow-hidden select-none"
+      x-data="salesApp()" x-init="initApp()">
+
+    <!-- TOP HEADER & STATS RIBBON -->
+    <header class="bg-white border-b border-neutral-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2">
+                <span class="font-extrabold tracking-tight text-sm font-mono uppercase bg-black text-white px-2 py-0.5 rounded">INSTOOL</span>
+                <span class="text-xs font-bold text-neutral-800 tracking-wide uppercase">Cổng Tiếp Cận Khách Hàng</span>
+            </div>
+            <div class="hidden sm:flex items-center space-x-1.5 pl-3 border-l border-neutral-200 text-[11px] font-mono text-neutral-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Cloudflare Edge (Online)</span>
+            </div>
+        </div>
+
+        <!-- Metric Badges -->
+        <div class="flex items-center space-x-2 text-xs font-mono">
+            <div class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded text-amber-900 flex items-center space-x-1 font-bold">
+                <span>Hôm nay cần làm:</span>
+                <span class="text-amber-800" x-text="stats.today_due">0</span>
+            </div>
+            <div class="hidden md:flex px-2.5 py-1 bg-blue-50 border border-blue-200 rounded text-blue-900 items-center space-x-1">
+                <span>Khách mới:</span>
+                <span class="font-bold" x-text="stats.new">0</span>
+            </div>
+            <div class="hidden md:flex px-2.5 py-1 bg-neutral-100 border border-neutral-200 rounded text-neutral-800 items-center space-x-1">
+                <span>Đang chăm sóc:</span>
+                <span class="font-bold" x-text="stats.active">0</span>
+            </div>
+            <div class="px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 flex items-center space-x-1 font-bold">
+                <span>Chốt đơn:</span>
+                <span class="text-emerald-800" x-text="stats.won">0</span>
+            </div>
+
+            <!-- Refresh Button -->
+            <button @click="loadLeads(); loadStats();" :disabled="isLoading"
+                    class="p-1.5 border border-neutral-200 rounded hover:bg-neutral-100 text-neutral-600 transition"
+                    title="Tải lại dữ liệu">
+                <span :class="{'inline-block animate-spin': isLoading}">↻</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION -->
+    <div x-show="toastShow" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-2"
+         class="fixed bottom-5 right-5 z-50 max-w-sm p-3.5 rounded border shadow-2xl text-xs flex items-center space-x-2.5 font-sans"
+         :class="{
+             'bg-neutral-900 text-white border-neutral-800': toastType === 'info',
+             'bg-emerald-50 text-emerald-900 border-emerald-300': toastType === 'success',
+             'bg-rose-50 text-rose-900 border-rose-300': toastType === 'error'
+         }">
+        <span class="flex-1 font-medium" x-text="toastMsg"></span>
+        <button type="button" @click="toastShow = false" class="opacity-60 hover:opacity-100 text-sm font-bold">&times;</button>
+    </div>
+
+    <!-- MAIN 2-COLUMN WORKSPACE -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- ========================================== -->
+        <!-- LEFT COLUMN (40%): LEADS LIST & FILTERS     -->
+        <!-- ========================================== -->
+        <section class="w-full md:w-[40%] lg:w-[35%] bg-white border-r border-neutral-200 flex flex-col shrink-0"
+                 :class="{'hidden md:flex': mobileDetailOpen, 'flex': !mobileDetailOpen}">
+
+            <!-- Tabs Navigation -->
+            <div class="p-3 border-b border-neutral-200 space-y-2.5">
+                <div class="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
+                    <button @click="switchTab('today')"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            :class="currentTab === 'today' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
+                        Cần làm hôm nay (<span x-text="stats.today_due"></span>)
+                    </button>
+                    <button @click="switchTab('new')"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            :class="currentTab === 'new' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
+                        Mới (<span x-text="stats.new"></span>)
+                    </button>
+                    <button @click="switchTab('active')"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            :class="currentTab === 'active' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
+                        Đang chăm sóc (<span x-text="stats.active"></span>)
+                    </button>
+                    <button @click="switchTab('won')"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            :class="currentTab === 'won' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
+                        Đã chốt (<span x-text="stats.won"></span>)
+                    </button>
+                    <button @click="switchTab('all')"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            :class="currentTab === 'all' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
+                        Tất cả (<span x-text="stats.total"></span>)
+                    </button>
+                </div>
+
+                <!-- Search & Score Threshold Filter -->
+                <div class="flex items-center space-x-2">
+                    <div class="relative flex-1">
+                        <input type="text" x-model.debounce.300ms="searchQuery" @input="loadLeads()"
+                               placeholder="Tìm username, tên, ghi chú..."
+                               class="w-full text-xs pl-7 pr-3 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
+                        <span class="absolute left-2.5 top-1.5 text-neutral-400 text-xs font-mono">⚲</span>
+                    </div>
+
+                    <select x-model="scoreFilter" @change="applyLocalFilters()"
+                            class="text-[11px] font-mono border border-neutral-300 rounded px-2 py-1.5 bg-white text-neutral-700 focus:outline-none">
+                        <option value="all">Mọi điểm AI</option>
+                        <option value="80">≥ 80 (Cực tiềm năng)</option>
+                        <option value="65">≥ 65 (Tiềm năng)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Leads List Container -->
+            <div class="flex-1 overflow-y-auto divide-y divide-neutral-100 select-text">
+                <template x-if="isLoading && leads.length === 0">
+                    <div class="p-8 text-center text-neutral-400 text-xs">
+                        <span class="inline-block animate-spin mr-1.5">↻</span> Đang tải danh sách khách hàng từ Cloudflare D1...
+                    </div>
+                </template>
+
+                <template x-if="!isLoading && filteredLeads.length === 0">
+                    <div class="p-8 text-center text-neutral-400 text-xs space-y-1">
+                        <p class="font-bold text-neutral-600">Không có khách hàng nào phù hợp</p>
+                        <p class="text-[11px]">Hãy kiểm tra lại bộ lọc hoặc đẩy thêm khách từ phần mềm Instool.</p>
+                    </div>
+                </template>
+
+                <template x-for="lead in filteredLeads" :key="lead.id || lead.username">
+                    <div @click="selectLead(lead)"
+                         class="p-3.5 hover:bg-neutral-50 transition cursor-pointer flex items-start space-x-3"
+                         :class="selectedLead && selectedLead.username === lead.username ? 'bg-neutral-50 border-l-4 border-black' : ''">
+                        
+                        <!-- Letter Avatar -->
+                        <div class="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 uppercase font-mono">
+                            <span x-text="lead.username.charAt(0)"></span>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="font-mono font-bold text-xs text-neutral-900 truncate">@<span x-text="lead.username"></span></span>
+                                
+                                <!-- AI Score Badge -->
+                                <span class="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded border shrink-0"
+                                      :class="{
+                                          'bg-emerald-50 text-emerald-800 border-emerald-300': (lead.fit_score || 0) >= 80,
+                                          'bg-blue-50 text-blue-800 border-blue-200': (lead.fit_score || 0) >= 65 && (lead.fit_score || 0) < 80,
+                                          'bg-neutral-100 text-neutral-600 border-neutral-200': (lead.fit_score || 0) < 65
+                                      }">
+                                    AI: <span x-text="lead.fit_score || '-'"></span>
+                                </span>
+                            </div>
+
+                            <div class="text-[11px] text-neutral-600 truncate mb-1">
+                                <span x-text="lead.full_name || lead.detected_industry || 'Chưa cập nhật tên'"></span>
+                            </div>
+
+                            <!-- Meta & Status Badges -->
+                            <div class="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                                <span><span x-text="formatNumber(lead.followers)"></span> flws</span>
+                                
+                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold"
+                                      :class="{
+                                          'bg-neutral-100 text-neutral-700 border-neutral-300': lead.sale_status === 'New',
+                                          'bg-blue-50 text-blue-800 border-blue-300': lead.sale_status === 'Contacted',
+                                          'bg-amber-50 text-amber-800 border-amber-300': ['In_Discussion', 'Demo_Sent'].includes(lead.sale_status),
+                                          'bg-emerald-50 text-emerald-800 border-emerald-300': lead.sale_status === 'Won',
+                                          'bg-rose-50 text-rose-800 border-rose-300': lead.sale_status === 'Lost'
+                                      }"
+                                      x-text="getSaleStatusLabel(lead.sale_status)">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+
+        <!-- ======================================================== -->
+        <!-- RIGHT COLUMN (60%): DETAIL & OUTREACH WORKSPACE           -->
+        <!-- ======================================================== -->
+        <section class="flex-1 bg-neutral-50 flex flex-col overflow-y-auto select-text"
+                 :class="{'flex': mobileDetailOpen, 'hidden md:flex': !mobileDetailOpen}">
+
+            <template x-if="!selectedLead">
+                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-neutral-400 text-xs">
+                    <div class="w-12 h-12 rounded-full border border-neutral-300 flex items-center justify-center text-lg mb-2 text-neutral-500">
+                        ☞
+                    </div>
+                    <p class="font-bold text-neutral-700 uppercase tracking-wide">Chọn một khách hàng để bắt đầu</p>
+                    <p class="text-[11px] text-neutral-500 max-w-sm mt-1">
+                        Xem chi tiết đánh giá AI, điểm đau trong video, kịch bản DM cá nhân hóa và nút 1-Click mở Instagram chat.
+                    </p>
+                </div>
+            </template>
+
+            <template x-if="selectedLead">
+                <div class="p-4 md:p-6 space-y-4 max-w-4xl mx-auto w-full">
+
+                    <!-- Mobile Back Navigation Button -->
+                    <div class="md:hidden pb-2 border-b border-neutral-200">
+                        <button @click="mobileDetailOpen = false" class="text-xs font-mono font-bold text-neutral-700 flex items-center space-x-1">
+                            <span>&larr;</span> <span>Quay lại danh sách</span>
+                        </button>
+                    </div>
+
+                    <!-- 1. LEAD PROFILE HEADER CARD -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <h2 class="text-base font-bold font-mono text-neutral-900">@<span x-text="selectedLead.username"></span></h2>
+                                <a :href="'https://instagram.com/' + selectedLead.username" target="_blank"
+                                   class="px-2 py-0.5 border border-neutral-300 hover:border-black rounded text-[11px] font-mono text-neutral-700 hover:text-black transition inline-flex items-center space-x-1">
+                                    <span>Xem Instagram</span>
+                                    <span>↗</span>
+                                </a>
+                            </div>
+                            <div class="text-xs text-neutral-700 font-medium" x-text="selectedLead.full_name || 'Chưa có tên đầy đủ'"></div>
+                            <div class="text-[11px] text-neutral-500 leading-relaxed max-w-xl" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
+                        </div>
+
+                        <!-- High-Level Metric Badges -->
+                        <div class="flex sm:flex-col items-end gap-1.5 text-xs font-mono shrink-0">
+                            <div class="text-neutral-700">
+                                <b><span x-text="formatNumber(selectedLead.followers)"></span></b> Followers
+                            </div>
+                            <div class="text-neutral-500 text-[11px]">
+                                <b><span x-text="selectedLead.reels_last_30d || 0"></span></b> Reels trong 30 ngày
+                            </div>
+                            <div class="text-[10px] text-neutral-400" x-text="selectedLead.detected_industry || selectedLead.category_name || 'Chưa phân loại'"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- 2. AI EVALUATION CARD (ĐÁNH GIÁ CHI TIẾT & BẰNG CHỨNG) -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Đánh giá Nhu cầu từ AI (AI Insight)</h3>
+                            </div>
+                            <div class="font-mono text-xs font-bold flex items-center space-x-1.5">
+                                <span class="text-neutral-500 text-[11px]">Tổng điểm:</span>
+                                <span class="px-2 py-0.5 rounded text-xs border"
+                                      :class="{
+                                          'bg-emerald-50 text-emerald-800 border-emerald-300': (selectedLead.fit_score || 0) >= 80,
+                                          'bg-blue-50 text-blue-800 border-blue-200': (selectedLead.fit_score || 0) >= 65 && (selectedLead.fit_score || 0) < 80,
+                                          'bg-neutral-100 text-neutral-700 border-neutral-200': (selectedLead.fit_score || 0) < 65
+                                      }">
+                                    <span x-text="selectedLead.fit_score || 0"></span> / 100
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 5 Pillar Progress Bars -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                    <span>1. Cam kết làm Video:</span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 20) + '/25đ'"></span>
+                                </div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.video_volume || 20)/25*100) + '%'"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                    <span>2. Lỗ hổng Retention & Hook:</span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 22) + '/30đ'"></span>
+                                </div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.engagement_gap || 22)/30*100) + '%'"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                    <span>3. Khả năng chi trả:</span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.monetization || 18) + '/25đ'"></span>
+                                </div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.monetization || 18)/25*100) + '%'"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                    <span>4. Nghẽn thời gian:</span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 15) + '/20đ'"></span>
+                                </div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.capacity_bottleneck || 15)/20*100) + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Evidence & Pain Points Box -->
+                        <div class="bg-neutral-50 border border-neutral-200 rounded p-3 text-xs space-y-1.5">
+                            <span class="font-bold text-[11px] uppercase tracking-wider text-neutral-700 block font-mono">Bằng chứng & Điểm đau AI phát hiện (Dùng để bắt chuyện):</span>
+                            <ul class="list-disc list-inside space-y-1 text-neutral-700 leading-relaxed">
+                                <template x-for="(point, idx) in (selectedLead.ai_evidence_parsed || [])" :key="idx">
+                                    <li x-text="point"></li>
+                                </template>
+                                <template x-if="!selectedLead.ai_evidence_parsed || selectedLead.ai_evidence_parsed.length === 0">
+                                    <li class="text-neutral-400 italic">Kênh có tiềm năng tăng trưởng, cần đề xuất dựng thử 1 video mẫu để tối ưu visual hook và âm thanh.</li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <!-- 3. 1-CLICK OUTREACH CENTER (TRUNG TÂM TIẾP CẬN) -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Kịch bản DM Tiếp Cận Cá Nhân Hóa</h3>
+                            <span class="text-[11px] font-mono text-neutral-400">AI Sinh sẵn theo ngách</span>
+                        </div>
+
+                        <!-- Editable Message Area -->
+                        <div>
+                            <textarea x-model="selectedLead.suggested_dm" rows="4"
+                                      placeholder="Soạn nội dung tin nhắn DM gửi khách..."
+                                      class="w-full text-xs font-sans p-3 border border-neutral-300 rounded focus:outline-none focus:border-black leading-relaxed"></textarea>
+                        </div>
+
+                        <!-- 1-Click Action Button -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                            <button @click="copyDmAndOpenChat(selectedLead)"
+                                    class="flex-1 py-2.5 px-4 bg-black hover:bg-neutral-800 text-white rounded text-xs font-bold transition flex items-center justify-center space-x-2 shadow-sm">
+                                <span>⚡</span>
+                                <span>Sao chép DM & Mở Instagram Chat</span>
+                                <span class="text-neutral-400 font-mono text-[11px]">(ig.me/m/...)</span>
+                            </button>
+
+                            <button @click="copyOnlyDm(selectedLead.suggested_dm)"
+                                    class="py-2.5 px-3 border border-neutral-300 hover:border-black rounded text-xs font-medium bg-white text-neutral-700 transition">
+                                Chỉ sao chép DM
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-neutral-400 italic">
+                            * Bấm nút sẽ tự chép tin nhắn vào máy, mở thẳng cửa sổ chat Instagram, tự chuyển trạng thái sang "Đã gửi DM" và hẹn nhắc Follow-up sau 3 ngày.
+                        </p>
+                    </div>
+
+
+                    <!-- 4. SALE CRM & PIPELINE UPDATER -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Tiến Độ Chăm Sóc Khách Hàng (Sale Pipeline)</h3>
+                            <span class="text-[11px] font-mono text-neutral-400" x-text="'Cập nhật lúc: ' + (selectedLead.updated_at || 'Mới')"></span>
+                        </div>
+
+                        <!-- Sale Status Buttons -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-neutral-700">Trạng thái tiếp cận:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 text-xs font-mono">
+                                <button type="button" @click="selectedLead.sale_status = 'New'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'New' ? 'bg-black text-white border-black' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Mới
+                                </button>
+                                <button type="button" @click="selectedLead.sale_status = 'Contacted'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'Contacted' ? 'bg-blue-600 text-white border-blue-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Đã gửi DM
+                                </button>
+                                <button type="button" @click="selectedLead.sale_status = 'In_Discussion'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'In_Discussion' ? 'bg-amber-600 text-white border-amber-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Đang trao đổi
+                                </button>
+                                <button type="button" @click="selectedLead.sale_status = 'Demo_Sent'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'Demo_Sent' ? 'bg-purple-600 text-white border-purple-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Đã gửi Demo
+                                </button>
+                                <button type="button" @click="selectedLead.sale_status = 'Won'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'Won' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Chốt đơn ★
+                                </button>
+                                <button type="button" @click="selectedLead.sale_status = 'Lost'"
+                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        :class="selectedLead.sale_status === 'Lost' ? 'bg-rose-600 text-white border-rose-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
+                                    Từ chối
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Follow-up Scheduler & Assigned Sale -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-semibold text-neutral-700 mb-1">Lịch hẹn Follow-up tiếp theo</label>
+                                <input type="datetime-local" x-model="selectedLead.follow_up_at"
+                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-mono focus:outline-none focus:border-black">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-neutral-700 mb-1">Nhân viên Sale phụ trách</label>
+                                <input type="text" x-model="selectedLead.sale_assigned_to" placeholder="e.g. Hoàng Nam"
+                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-sans focus:outline-none focus:border-black">
+                            </div>
+                        </div>
+
+                        <!-- Quick Note -->
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-neutral-700">Ghi chú chăm sóc khách hàng (Lưu lại nhu cầu, phản hồi, hẹn báo giá):</label>
+                            <textarea x-model="selectedLead.sale_note" rows="2"
+                                      placeholder="Ghi chú nhanh: Khách hẹn thứ 6 gửi raw footage, thích font chữ kiểu Hormozi..."
+                                      class="w-full text-xs font-sans p-2.5 border border-neutral-300 rounded focus:outline-none focus:border-black"></textarea>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="flex justify-end pt-2">
+                            <button @click="saveLeadProgress(selectedLead)" :disabled="isSaving"
+                                    class="py-2 px-6 bg-black hover:bg-neutral-800 text-white rounded text-xs font-bold transition shadow-sm disabled:opacity-50 flex items-center space-x-1.5">
+                                <span x-show="isSaving" class="inline-block animate-spin mr-1">↻</span>
+                                <span x-text="isSaving ? 'Đang lưu lên D1...' : 'Lưu cập nhật tiến độ'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </template>
+        </section>
+
+    </main>
+
+    <!-- ALPINE.JS APPLICATION LOGIC -->
+    <script>
+        function salesApp() {
+            return {
+                currentTab: 'today',
+                searchQuery: '',
+                scoreFilter: 'all',
+                leads: [],
+                filteredLeads: [],
+                selectedLead: null,
+                stats: { today_due: 0, new: 0, active: 0, won: 0, total: 0 },
+                isLoading: false,
+                isSaving: false,
+                mobileDetailOpen: false,
+                toastShow: false,
+                toastMsg: '',
+                toastType: 'info',
+
+                showToast(msg, type = 'info', duration = 4000) {
+                    this.toastMsg = msg;
+                    this.toastType = type;
+                    this.toastShow = true;
+                    setTimeout(() => { this.toastShow = false; }, duration);
+                },
+
+                formatNumber(num) {
+                    if (!num) return '0';
+                    return Number(num).toLocaleString('vi-VN');
+                },
+
+                getSaleStatusLabel(st) {
+                    const map = {
+                        'New': 'Mới tiếp nhận',
+                        'Contacted': 'Đã gửi DM',
+                        'In_Discussion': 'Đang trao đổi',
+                        'Demo_Sent': 'Đã gửi Demo',
+                        'Won': 'Chốt đơn ★',
+                        'Lost': 'Từ chối'
+                    };
+                    return map[st] || st || 'Mới';
+                },
+
+                async initApp() {
+                    await Promise.all([this.loadStats(), this.loadLeads()]);
+                },
+
+                switchTab(tab) {
+                    this.currentTab = tab;
+                    this.loadLeads();
+                },
+
+                async loadStats() {
+                    try {
+                        const res = await fetch('/api/stats');
+                        const data = await res.json();
+                        if (data.success && data.stats) {
+                            this.stats = data.stats;
+                        }
+                    } catch (e) {
+                        console.warn('Could not load stats:', e);
+                    }
+                },
+
+                async loadLeads() {
+                    this.isLoading = true;
+                    try {
+                        const params = new URLSearchParams();
+                        params.set('tab', this.currentTab);
+                        if (this.searchQuery.trim()) {
+                            params.set('search', this.searchQuery.trim());
+                        }
+
+                        const res = await fetch('/api/leads?' + params.toString());
+                        const data = await res.json();
+                        if (data.success) {
+                            this.leads = data.leads || [];
+                            this.applyLocalFilters();
+                            
+                            // Auto select first lead if none selected
+                            if (!this.selectedLead && this.filteredLeads.length > 0) {
+                                this.selectedLead = this.filteredLeads[0];
+                            } else if (this.selectedLead) {
+                                // re-link selected lead
+                                const found = this.filteredLeads.find(l => l.username === this.selectedLead.username);
+                                if (found) this.selectedLead = found;
+                            }
+                        } else {
+                            this.showToast(data.error || 'Lỗi tải dữ liệu từ D1', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('Lỗi mạng khi tải khách hàng: ' + e, 'error');
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                applyLocalFilters() {
+                    let list = [...this.leads];
+                    if (this.scoreFilter === '80') {
+                        list = list.filter(l => (l.fit_score || 0) >= 80);
+                    } else if (this.scoreFilter === '65') {
+                        list = list.filter(l => (l.fit_score || 0) >= 65);
+                    }
+                    this.filteredLeads = list;
+                },
+
+                selectLead(lead) {
+                    this.selectedLead = lead;
+                    this.mobileDetailOpen = true;
+                },
+
+                async copyDmAndOpenChat(lead) {
+                    if (!lead) return;
+                    const dmText = lead.suggested_dm || '';
+                    
+                    // 1. Copy to clipboard
+                    try {
+                        await navigator.clipboard.writeText(dmText);
+                    } catch (err) {
+                        // fallback
+                        const ta = document.createElement('textarea');
+                        ta.value = dmText;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                    }
+
+                    // 2. Open Instagram DM in new tab
+                    const igUrl = `https://ig.me/m/${lead.username}`;
+                    window.open(igUrl, '_blank');
+
+                    // 3. Auto update status to 'Contacted' and schedule follow up in 3 days
+                    lead.sale_status = 'Contacted';
+                    lead.contacted_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    
+                    const next3Days = new Date();
+                    next3Days.setDate(next3Days.getDate() + 3);
+                    lead.follow_up_at = next3Days.toISOString().slice(0, 16);
+
+                    // 4. Save to D1
+                    await this.saveLeadProgress(lead, false);
+
+                    this.showToast(`Đã sao chép tin nhắn & mở hộp thư @${lead.username}!`, 'success', 5000);
+                },
+
+                async copyOnlyDm(text) {
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        this.showToast('Đã sao chép tin nhắn vào bộ nhớ tạm!', 'success');
+                    } catch (e) {
+                        this.showToast('Lỗi sao chép: ' + e, 'error');
+                    }
+                },
+
+                async saveLeadProgress(lead, showFeedback = true) {
+                    if (!lead) return;
+                    this.isSaving = true;
+                    try {
+                        const payload = {
+                            id: lead.id,
+                            username: lead.username,
+                            sale_status: lead.sale_status,
+                            sale_tag: lead.sale_tag,
+                            sale_note: lead.sale_note,
+                            sale_assigned_to: lead.sale_assigned_to,
+                            follow_up_at: lead.follow_up_at,
+                            contacted_at: lead.contacted_at
+                        };
+
+                        const res = await fetch('/api/leads', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            if (showFeedback) {
+                                this.showToast('Đã lưu tiến độ lên Cloudflare D1 thành công!', 'success');
+                            }
+                            this.loadStats();
+                        } else {
+                            this.showToast(data.error || 'Lỗi lưu tiến độ', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('Lỗi lưu: ' + e, 'error');
+                    } finally {
+                        this.isSaving = false;
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>
