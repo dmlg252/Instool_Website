@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INSTOOL</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,19 +10,30 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            -webkit-overflow-scrolling: touch;
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: #fafafa; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
         * { -webkit-tap-highlight-color: transparent; }
-        body { font-size: 14px; }
+        body { font-size: 14.5px; }
+        .scroll-touch {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
     </style>
 </head>
-<body class="bg-neutral-100 text-neutral-900 font-sans antialiased h-[100dvh] flex flex-col overflow-hidden select-none w-full max-w-full"
+<body class="bg-neutral-100 text-neutral-900 font-sans antialiased min-h-screen md:h-screen md:overflow-hidden flex flex-col w-full max-w-full"
       x-data="salesApp()" x-init="initApp()">
 
     <!-- THANH TIÊU ĐỀ TRÊN CÙNG: CHỈ DUY NHẤT CHỮ INSTOOL & THỐNG KÊ GỌN GÀNG -->
-    <header class="bg-white border-b border-neutral-200 px-3 sm:px-5 py-2.5 flex items-center justify-between shrink-0 shadow-2xs w-full max-w-full">
+    <header class="sticky top-0 z-40 bg-white border-b border-neutral-200 px-3 sm:px-5 py-2.5 flex items-center justify-between shrink-0 shadow-2xs w-full max-w-full">
         <div class="flex items-center space-x-2 shrink-0">
             <span class="font-extrabold tracking-tight text-sm sm:text-base font-mono uppercase bg-black text-white px-2.5 py-1 rounded">INSTOOL</span>
             <span class="hidden lg:inline text-xs font-mono text-neutral-400 pl-2 border-l border-neutral-200">Trực tuyến</span>
@@ -70,12 +81,12 @@
     </div>
 
     <!-- KHÔNG GIAN LÀM VIỆC 2 CỘT (TỐI ƯU 100% MOBILE & DESKTOP) -->
-    <main class="flex-1 flex overflow-hidden relative w-full max-w-full">
+    <main class="flex-1 flex flex-col md:flex-row min-h-0 md:overflow-hidden relative w-full max-w-full">
 
         <!-- ========================================================== -->
         <!-- CỘT TRÁI: BỘ LỌC THÔNG MINH CHO 5.000 KHÁCH & DANH SÁCH     -->
         <!-- ========================================================== -->
-        <section class="w-full md:w-[40%] lg:w-[38%] bg-white border-r border-neutral-200 flex flex-col shrink-0 overflow-x-hidden min-w-0"
+        <section class="w-full md:w-[40%] lg:w-[38%] md:h-full bg-white border-r border-neutral-200 flex flex-col shrink-0 min-w-0 min-h-0"
                  :class="{'hidden md:flex': mobileDetailOpen, 'flex': !mobileDetailOpen}">
 
             <!-- 1. Thanh chuyển Tab nghiệp vụ chính -->
@@ -246,7 +257,7 @@
             </div>
 
             <!-- 5. Danh sách thẻ khách hàng cuộn dọc -->
-            <div class="flex-1 overflow-y-auto divide-y divide-neutral-100 select-text">
+            <div class="flex-1 min-h-0 md:overflow-y-auto divide-y divide-neutral-100 scroll-touch">
                 <template x-if="isLoading && leads.length === 0">
                     <div class="p-8 text-center text-neutral-400 text-xs">
                         Đang tải danh sách khách hàng từ máy chủ...
@@ -316,7 +327,8 @@
         <!-- CỘT PHẢI: CHI TIẾT KHÁCH HÀNG & BÀN LÀM VIỆC TIẾP CẬN        -->
         <!-- TỐI ƯU CHỐNG TRÀN NGANG 100% TRÊN ĐIỆN THOẠI (BREAK-ALL)      -->
         <!-- ============================================================= -->
-        <section class="flex-1 bg-neutral-50 flex flex-col overflow-y-auto overflow-x-hidden select-text w-full max-w-full min-w-0"
+        <section id="rightDetailPane"
+                 class="flex-1 md:h-full bg-neutral-50 flex flex-col min-h-0 md:overflow-y-auto overflow-x-hidden scroll-touch w-full max-w-full min-w-0 pb-24 md:pb-16"
                  :class="{'flex': mobileDetailOpen, 'hidden md:flex': !mobileDetailOpen}">
 
             <template x-if="!selectedLead">
@@ -329,13 +341,14 @@
             </template>
 
             <template x-if="selectedLead">
-                <div class="p-3.5 sm:p-5 md:p-6 space-y-4 max-w-4xl mx-auto w-full max-w-full overflow-hidden">
+                <div class="p-3.5 sm:p-5 md:p-6 space-y-4 max-w-4xl mx-auto w-full max-w-full">
 
-                    <!-- Nút quay lại trên Mobile thuần chữ tối giản -->
-                    <div class="md:hidden pb-2 border-b border-neutral-200">
-                        <button @click="mobileDetailOpen = false" class="text-xs font-mono font-bold text-neutral-800 py-1 px-2 border border-neutral-300 rounded bg-white">
+                    <!-- Nút quay lại trên Mobile thuần chữ tối giản (Sticky cố định dưới Header) -->
+                    <div class="md:hidden sticky top-[49px] z-30 bg-neutral-50/95 backdrop-blur-xs py-2 px-1 border-b border-neutral-200 flex items-center justify-between">
+                        <button type="button" @click="backToList()" class="text-xs font-mono font-bold text-neutral-800 py-1.5 px-3 border border-neutral-300 rounded bg-white hover:bg-neutral-100 shadow-2xs">
                             Quay lại danh sách
                         </button>
+                        <span class="text-xs font-mono font-bold text-neutral-700 truncate max-w-[180px]">@<span x-text="selectedLead ? selectedLead.username : ''"></span></span>
                     </div>
 
                     <!-- 1. HỒ SƠ TỔNG QUAN KHÁCH HÀNG (CHỐNG TRÀN CHỮ) -->
@@ -852,6 +865,14 @@
                 selectLead(lead) {
                     this.selectedLead = lead;
                     this.mobileDetailOpen = true;
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    const rightPane = document.getElementById('rightDetailPane');
+                    if (rightPane) rightPane.scrollTop = 0;
+                },
+
+                backToList() {
+                    this.mobileDetailOpen = false;
+                    window.scrollTo({ top: 0, behavior: 'instant' });
                 },
 
                 async copyDmAndOpenChat(lead) {
