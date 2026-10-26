@@ -88,7 +88,7 @@
                  :class="{'hidden md:flex': mobileDetailOpen, 'flex': !mobileDetailOpen}">
 
             <!-- Thanh chuyển tab -->
-            <div class="p-3 border-b border-neutral-200 space-y-2.5">
+            <div class="p-3 border-b border-neutral-200 space-y-2">
                 <div class="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
                     <button @click="switchTab('today')"
                             class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
@@ -117,21 +117,120 @@
                     </button>
                 </div>
 
-                <!-- Ô tìm kiếm & Lọc theo điểm AI -->
-                <div class="flex items-center space-x-2">
+                <!-- Ô tìm kiếm & Nút mở Bộ lọc thông minh -->
+                <div class="flex items-center space-x-1.5">
                     <div class="relative flex-1">
-                        <input type="text" x-model.debounce.300ms="searchQuery" @input="loadLeads()"
-                               placeholder="Tìm tên tài khoản, họ tên, ghi chú..."
-                               class="w-full text-xs pl-7 pr-3 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
+                        <input type="text" x-model="searchQuery" @input="applyLocalFilters()"
+                               placeholder="Tìm tài khoản, họ tên, ngành, ghi chú..."
+                               class="w-full text-xs pl-7 pr-7 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
                         <span class="absolute left-2.5 top-1.5 text-neutral-400 text-xs font-mono">⚲</span>
+                        <button x-show="searchQuery" @click="searchQuery = ''; applyLocalFilters();"
+                                class="absolute right-2 top-1.5 text-neutral-400 hover:text-black text-xs font-bold font-mono">✕</button>
                     </div>
 
-                    <select x-model="scoreFilter" @change="applyLocalFilters()"
-                            class="text-[11px] font-mono border border-neutral-300 rounded px-2 py-1.5 bg-white text-neutral-700 focus:outline-none">
-                        <option value="all">Mọi điểm đánh giá</option>
-                        <option value="80">≥ 80 (Rất tiềm năng)</option>
-                        <option value="65">≥ 65 (Tiềm năng)</option>
+                    <!-- Nút bật/tắt Bộ lọc nâng cao -->
+                    <button @click="showAdvancedFilter = !showAdvancedFilter"
+                            class="px-2.5 py-1.5 border rounded text-xs font-mono transition flex items-center space-x-1 shrink-0"
+                            :class="showAdvancedFilter || activeFilterCount > 0 ? 'bg-black text-white border-black font-bold' : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50'">
+                        <span>Lọc</span>
+                        <span x-show="activeFilterCount > 0" class="px-1 py-0.2 bg-white text-black rounded text-[10px] font-bold" x-text="activeFilterCount"></span>
+                        <span x-text="showAdvancedFilter ? '▲' : '▼'" class="text-[9px]"></span>
+                    </button>
+
+                    <!-- Sắp xếp nhanh -->
+                    <select x-model="sortBy" @change="applyLocalFilters()"
+                            class="text-[11px] font-mono border border-neutral-300 rounded px-2 py-1.5 bg-white text-neutral-700 focus:outline-none max-w-[125px]">
+                        <option value="default">Ưu tiên mặc định</option>
+                        <option value="score_desc">Điểm cao nhất</option>
+                        <option value="followers_desc">Nhiều flw nhất</option>
+                        <option value="reels_desc">Nhiều Reels nhất</option>
+                        <option value="updated_desc">Mới cập nhật</option>
                     </select>
+                </div>
+
+                <!-- Khung Bộ Lọc Nâng Cao (Mở rộng/Thu gọn) -->
+                <div x-show="showAdvancedFilter" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="p-3 bg-neutral-50 border border-neutral-200 rounded space-y-2.5 text-xs font-mono">
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Tiêu chí 1: Mức điểm AI -->
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Mức điểm AI</label>
+                            <select x-model="scoreFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Mọi mức điểm</option>
+                                <option value="vip">≥ 80 điểm (Khách VIP)</option>
+                                <option value="qualified">65 – 79 điểm (Đạt chuẩn)</option>
+                                <option value="medium">50 – 64 điểm (Trung bình)</option>
+                                <option value="low">&lt; 50 điểm (Thấp)</option>
+                            </select>
+                        </div>
+
+                        <!-- Tiêu chí 2: Quy mô Followers -->
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Người theo dõi (Flw)</label>
+                            <select x-model="followersFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Mọi quy mô</option>
+                                <option value="micro">&lt; 5.000 flw (Micro)</option>
+                                <option value="growth">5.000 – 25.000 flw (Tăng trưởng)</option>
+                                <option value="medium">25.000 – 100.000 flw (Ngân sách tốt)</option>
+                                <option value="high">&gt; 100.000 flw (Kênh lớn)</option>
+                                <option value="custom">Tùy chọn số lượng...</option>
+                            </select>
+                        </div>
+
+                        <!-- Tiêu chí 3: Tần suất đăng Reels -->
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Số Reels / 30 ngày</label>
+                            <select x-model="reelsFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Mọi tần suất</option>
+                                <option value="high">≥ 12 reels (Rất tích cực)</option>
+                                <option value="medium">6 – 11 reels (Đều đặn)</option>
+                                <option value="low">&lt; 6 reels (Quá tải tự dựng)</option>
+                            </select>
+                        </div>
+
+                        <!-- Tiêu chí 4: Lĩnh vực / Ngành nghề -->
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Ngành nghề / Niche</label>
+                            <select x-model="industryFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Tất cả ngành nghề</option>
+                                <template x-for="ind in availableIndustries" :key="ind">
+                                    <option :value="ind" x-text="ind"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ô nhập Followers tùy chọn khi chọn 'custom' -->
+                    <div x-show="followersFilter === 'custom'" class="flex items-center space-x-2 pt-1">
+                        <input type="number" x-model.number="customMinFollowers" @input="applyLocalFilters()" placeholder="Flw tối thiểu (Min)" class="flex-1 text-xs p-1 border border-neutral-300 rounded bg-white">
+                        <span class="text-neutral-400">-</span>
+                        <input type="number" x-model.number="customMaxFollowers" @input="applyLocalFilters()" placeholder="Flw tối đa (Max)" class="flex-1 text-xs p-1 border border-neutral-300 rounded bg-white">
+                    </div>
+
+                    <!-- Thanh nút Đặt lại bộ lọc -->
+                    <div class="flex items-center justify-between pt-1.5 border-t border-neutral-200 text-[11px]">
+                        <span class="text-neutral-500 font-sans">
+                            Tìm thấy: <b class="text-black" x-text="filteredLeads.length"></b> / <span x-text="leads.length"></span> khách
+                        </span>
+                        <button type="button" @click="resetFilters()" class="text-rose-600 hover:text-rose-800 font-medium">
+                            Xóa toàn bộ bộ lọc
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dòng hiển thị kết quả & Các thẻ lọc đang bật -->
+                <div class="flex items-center justify-between text-[11px] font-mono text-neutral-500 pt-1">
+                    <div>
+                        Hiển thị: <b class="text-neutral-900" x-text="filteredLeads.length"></b> khách
+                        <span x-show="activeFilterCount > 0" class="text-neutral-400 font-sans">(Đang áp dụng <span x-text="activeFilterCount"></span> tiêu chí lọc)</span>
+                    </div>
+                    <button x-show="activeFilterCount > 0" @click="resetFilters()" class="text-xs text-neutral-400 hover:text-black">
+                        Xóa lọc ✕
+                    </button>
                 </div>
             </div>
 
@@ -479,7 +578,15 @@
             return {
                 currentTab: 'today',
                 searchQuery: '',
+                showAdvancedFilter: false,
                 scoreFilter: 'all',
+                followersFilter: 'all',
+                customMinFollowers: '',
+                customMaxFollowers: '',
+                reelsFilter: 'all',
+                industryFilter: 'all',
+                sortBy: 'default',
+                availableIndustries: [],
                 leads: [],
                 filteredLeads: [],
                 selectedLead: null,
@@ -566,6 +673,15 @@
                         const data = await res.json();
                         if (data.success) {
                             this.leads = data.leads || [];
+                            
+                            // Thu thập danh sách ngành nghề thực tế có trong dữ liệu
+                            const indSet = new Set();
+                            this.leads.forEach(l => {
+                                const ind = (l.detected_industry || l.category_name || '').trim();
+                                if (ind) indSet.add(ind);
+                            });
+                            this.availableIndustries = Array.from(indSet).sort();
+
                             this.applyLocalFilters();
                             
                             // Tự động chọn khách hàng đầu tiên nếu chưa chọn
@@ -585,14 +701,121 @@
                     }
                 },
 
+                get activeFilterCount() {
+                    let count = 0;
+                    if (this.searchQuery.trim()) count++;
+                    if (this.scoreFilter !== 'all') count++;
+                    if (this.followersFilter !== 'all') count++;
+                    if (this.reelsFilter !== 'all') count++;
+                    if (this.industryFilter !== 'all') count++;
+                    if (this.sortBy !== 'default') count++;
+                    return count;
+                },
+
+                resetFilters() {
+                    this.searchQuery = '';
+                    this.scoreFilter = 'all';
+                    this.followersFilter = 'all';
+                    this.customMinFollowers = '';
+                    this.customMaxFollowers = '';
+                    this.reelsFilter = 'all';
+                    this.industryFilter = 'all';
+                    this.sortBy = 'default';
+                    this.applyLocalFilters();
+                },
+
                 applyLocalFilters() {
                     let list = [...this.leads];
-                    if (this.scoreFilter === '80') {
-                        list = list.filter(l => (l.fit_score || 0) >= 80);
-                    } else if (this.scoreFilter === '65') {
-                        list = list.filter(l => (l.fit_score || 0) >= 65);
+
+                    // 1. Tìm kiếm từ khóa đa năng
+                    const q = this.searchQuery.trim().toLowerCase();
+                    if (q) {
+                        list = list.filter(l => {
+                            const u = (l.username || '').toLowerCase();
+                            const fn = (l.full_name || '').toLowerCase();
+                            const bio = (l.bio || '').toLowerCase();
+                            const ind = (l.detected_industry || l.category_name || '').toLowerCase();
+                            const note = (l.sale_note || '').toLowerCase();
+                            return u.includes(q) || fn.includes(q) || bio.includes(q) || ind.includes(q) || note.includes(q);
+                        });
                     }
+
+                    // 2. Mức điểm đánh giá AI
+                    if (this.scoreFilter === 'vip' || this.scoreFilter === '80') {
+                        list = list.filter(l => (l.fit_score || 0) >= 80);
+                    } else if (this.scoreFilter === 'qualified' || this.scoreFilter === '65') {
+                        list = list.filter(l => (l.fit_score || 0) >= 65 && (l.fit_score || 0) < 80);
+                    } else if (this.scoreFilter === 'medium') {
+                        list = list.filter(l => (l.fit_score || 0) >= 50 && (l.fit_score || 0) < 65);
+                    } else if (this.scoreFilter === 'low') {
+                        list = list.filter(l => (l.fit_score || 0) < 50);
+                    }
+
+                    // 3. Quy mô Followers
+                    if (this.followersFilter === 'micro') {
+                        list = list.filter(l => (l.followers || 0) < 5000);
+                    } else if (this.followersFilter === 'growth') {
+                        list = list.filter(l => (l.followers || 0) >= 5000 && (l.followers || 0) <= 25000);
+                    } else if (this.followersFilter === 'medium') {
+                        list = list.filter(l => (l.followers || 0) > 25000 && (l.followers || 0) <= 100000);
+                    } else if (this.followersFilter === 'high') {
+                        list = list.filter(l => (l.followers || 0) > 100000);
+                    } else if (this.followersFilter === 'custom') {
+                        if (this.customMinFollowers !== '') {
+                            list = list.filter(l => (l.followers || 0) >= Number(this.customMinFollowers));
+                        }
+                        if (this.customMaxFollowers !== '') {
+                            list = list.filter(l => (l.followers || 0) <= Number(this.customMaxFollowers));
+                        }
+                    }
+
+                    // 4. Số Reels trong 30 ngày
+                    if (this.reelsFilter === 'high') {
+                        list = list.filter(l => (l.reels_last_30d || 0) >= 12);
+                    } else if (this.reelsFilter === 'medium') {
+                        list = list.filter(l => (l.reels_last_30d || 0) >= 6 && (l.reels_last_30d || 0) < 12);
+                    } else if (this.reelsFilter === 'low') {
+                        list = list.filter(l => (l.reels_last_30d || 0) < 6);
+                    }
+
+                    // 5. Ngành nghề / Lĩnh vực
+                    if (this.industryFilter !== 'all') {
+                        list = list.filter(l => {
+                            const ind = (l.detected_industry || l.category_name || '').trim();
+                            return ind === this.industryFilter;
+                        });
+                    }
+
+                    // 6. Sắp xếp kết quả
+                    if (this.sortBy === 'score_desc') {
+                        list.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
+                    } else if (this.sortBy === 'followers_desc') {
+                        list.sort((a, b) => (b.followers || 0) - (a.followers || 0));
+                    } else if (this.sortBy === 'reels_desc') {
+                        list.sort((a, b) => (b.reels_last_30d || 0) - (a.reels_last_30d || 0));
+                    } else if (this.sortBy === 'updated_desc') {
+                        list.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
+                    } else {
+                        // Mặc định: Ưu tiên khách cần làm hôm nay, sau đó đến điểm cao
+                        const now = new Date().toISOString().slice(0, 10);
+                        list.sort((a, b) => {
+                            const aDue = a.follow_up_at && a.follow_up_at.slice(0, 10) <= now ? 0 : 1;
+                            const bDue = b.follow_up_at && b.follow_up_at.slice(0, 10) <= now ? 0 : 1;
+                            if (aDue !== bDue) return aDue - bDue;
+                            return (b.fit_score || 0) - (a.fit_score || 0);
+                        });
+                    }
+
                     this.filteredLeads = list;
+
+                    // Giữ nguyên khách đang chọn hoặc chọn khách đầu tiên của danh sách đã lọc
+                    if (this.filteredLeads.length > 0) {
+                        if (!this.selectedLead || !this.filteredLeads.some(l => l.username === this.selectedLead.username)) {
+                            this.selectedLead = this.filteredLeads[0];
+                        }
+                    } else {
+                        this.selectedLead = null;
+                    }
                 },
 
                 selectLead(lead) {

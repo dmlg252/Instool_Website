@@ -16,6 +16,13 @@ export async function onRequestGet(context) {
     const url = new URL(context.request.url);
     const tab = url.searchParams.get("tab") || "today";
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();
+    const minScore = url.searchParams.get("min_score");
+    const maxScore = url.searchParams.get("max_score");
+    const minFollowers = url.searchParams.get("min_followers");
+    const maxFollowers = url.searchParams.get("max_followers");
+    const minReels = url.searchParams.get("min_reels");
+    const industry = (url.searchParams.get("industry") || "").trim().toLowerCase();
+    const sortBy = url.searchParams.get("sort_by") || "default";
 
     let query = "SELECT * FROM leads WHERE 1=1";
     const params = [];
@@ -34,15 +41,60 @@ export async function onRequestGet(context) {
       query += " AND sale_status = 'Lost'";
     }
 
-    // Search filter
+    // Keyword Search (username, full_name, bio, sale_note, detected_industry)
     if (search) {
-      query += " AND (LOWER(username) LIKE ? OR LOWER(full_name) LIKE ? OR LOWER(sale_note) LIKE ? OR LOWER(detected_industry) LIKE ?)";
+      query += " AND (LOWER(username) LIKE ? OR LOWER(full_name) LIKE ? OR LOWER(sale_note) LIKE ? OR LOWER(detected_industry) LIKE ? OR LOWER(bio) LIKE ?)";
       const pattern = `%${search}%`;
-      params.push(pattern, pattern, pattern, pattern);
+      params.push(pattern, pattern, pattern, pattern, pattern);
     }
 
-    // Ordering: Prioritize follow-up due, then fit score, then latest updated
-    query += " ORDER BY CASE WHEN follow_up_at IS NOT NULL AND date(follow_up_at) <= date('now', '+1 day') THEN 0 ELSE 1 END, fit_score DESC, updated_at DESC LIMIT 300";
+    // Fit Score
+    if (minScore !== null && minScore !== "" && !isNaN(minScore)) {
+      query += " AND fit_score >= ?";
+      params.push(parseInt(minScore));
+    }
+    if (maxScore !== null && maxScore !== "" && !isNaN(maxScore)) {
+      query += " AND fit_score <= ?";
+      params.push(parseInt(maxScore));
+    }
+
+    // Followers
+    if (minFollowers !== null && minFollowers !== "" && !isNaN(minFollowers)) {
+      query += " AND followers >= ?";
+      params.push(parseInt(minFollowers));
+    }
+    if (maxFollowers !== null && maxFollowers !== "" && !isNaN(maxFollowers)) {
+      query += " AND followers <= ?";
+      params.push(parseInt(maxFollowers));
+    }
+
+    // Reels 30d
+    if (minReels !== null && minReels !== "" && !isNaN(minReels)) {
+      query += " AND reels_last_30d >= ?";
+      params.push(parseInt(minReels));
+    }
+
+    // Industry
+    if (industry && industry !== "all") {
+      query += " AND LOWER(detected_industry) LIKE ?";
+      params.push(`%${industry}%`);
+    }
+
+    // Sorting
+    if (sortBy === "followers_desc") {
+      query += " ORDER BY followers DESC, updated_at DESC";
+    } else if (sortBy === "reels_desc") {
+      query += " ORDER BY reels_last_30d DESC, updated_at DESC";
+    } else if (sortBy === "updated_desc") {
+      query += " ORDER BY updated_at DESC";
+    } else if (sortBy === "score_desc") {
+      query += " ORDER BY fit_score DESC, updated_at DESC";
+    } else {
+      // Default: prioritize today due follow-ups, then high fit score, then latest update
+      query += " ORDER BY CASE WHEN follow_up_at IS NOT NULL AND date(follow_up_at) <= date('now', '+1 day') THEN 0 ELSE 1 END, fit_score DESC, updated_at DESC";
+    }
+
+    query += " LIMIT 500";
 
     const stmt = db.prepare(query);
     const result = params.length > 0 ? await stmt.bind(...params).all() : await stmt.all();
