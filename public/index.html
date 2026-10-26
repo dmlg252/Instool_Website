@@ -3,57 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instool — Cổng Quản Lý & Tiếp Cận Khách Hàng</title>
+    <title>INSTOOL</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f5f5f5; }
         ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+        body { font-size: 14px; }
     </style>
 </head>
 <body class="bg-neutral-100 text-neutral-900 font-sans antialiased h-screen flex flex-col overflow-hidden select-none"
       x-data="salesApp()" x-init="initApp()">
 
-    <!-- THANH TIÊU ĐỀ TRÊN CÙNG & THỐNG KÊ NHANH -->
-    <header class="bg-white border-b border-neutral-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm">
-        <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-2">
-                <span class="font-extrabold tracking-tight text-sm font-mono uppercase bg-black text-white px-2 py-0.5 rounded">INSTOOL</span>
-                <span class="text-xs font-bold text-neutral-800 tracking-wide uppercase">Cổng Tiếp Cận Khách Hàng</span>
-            </div>
-            <div class="hidden sm:flex items-center space-x-1.5 pl-3 border-l border-neutral-200 text-[11px] font-mono text-neutral-500">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <!-- THANH TIÊU ĐỀ TRÊN CÙNG (CHỈ GIỮ CHỮ INSTOOL) & THỐNG KÊ NHANH -->
+    <header class="bg-white border-b border-neutral-200 px-5 py-3 flex items-center justify-between shrink-0 shadow-sm">
+        <div class="flex items-center space-x-3.5">
+            <span class="font-extrabold tracking-tight text-base font-mono uppercase bg-black text-white px-3 py-1 rounded">INSTOOL</span>
+            <div class="hidden sm:flex items-center space-x-1.5 pl-3 border-l border-neutral-200 text-xs font-mono text-neutral-500">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Máy chủ đám mây (Đang kết nối)</span>
             </div>
         </div>
 
-        <!-- Các thẻ đếm số lượng -->
-        <div class="flex items-center space-x-2 text-xs font-mono">
-            <div class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded text-amber-900 flex items-center space-x-1 font-bold">
+        <!-- Các thẻ đếm số lượng tổng quan -->
+        <div class="flex items-center space-x-2.5 text-xs sm:text-sm font-mono">
+            <div class="px-3 py-1.5 bg-amber-50 border border-amber-200 rounded text-amber-900 flex items-center space-x-1.5 font-bold shadow-2xs">
                 <span>Hôm nay cần làm:</span>
-                <span class="text-amber-800" x-text="stats.today_due">0</span>
+                <span class="text-amber-800 text-sm font-extrabold" x-text="stats.today_due">0</span>
             </div>
-            <div class="hidden md:flex px-2.5 py-1 bg-blue-50 border border-blue-200 rounded text-blue-900 items-center space-x-1">
+            <div class="hidden md:flex px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-blue-900 items-center space-x-1.5">
                 <span>Khách mới:</span>
-                <span class="font-bold" x-text="stats.new">0</span>
+                <span class="font-bold text-sm" x-text="stats.new">0</span>
             </div>
-            <div class="hidden md:flex px-2.5 py-1 bg-neutral-100 border border-neutral-200 rounded text-neutral-800 items-center space-x-1">
+            <div class="hidden md:flex px-3 py-1.5 bg-neutral-100 border border-neutral-200 rounded text-neutral-800 items-center space-x-1.5">
                 <span>Đang chăm sóc:</span>
-                <span class="font-bold" x-text="stats.active">0</span>
+                <span class="font-bold text-sm" x-text="stats.active">0</span>
             </div>
-            <div class="px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 flex items-center space-x-1 font-bold">
+            <div class="px-3 py-1.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 flex items-center space-x-1.5 font-bold shadow-2xs">
                 <span>Chốt đơn:</span>
-                <span class="text-emerald-800" x-text="stats.won">0</span>
+                <span class="text-emerald-800 text-sm font-extrabold" x-text="stats.won">0</span>
             </div>
 
-            <!-- Nút tải lại -->
+            <!-- Nút tải lại dữ liệu -->
             <button @click="loadLeads(); loadStats();" :disabled="isLoading"
-                    class="p-1.5 border border-neutral-200 rounded hover:bg-neutral-100 text-neutral-600 transition"
+                    class="p-2 border border-neutral-200 rounded hover:bg-neutral-100 text-neutral-600 transition"
                     title="Tải lại dữ liệu">
                 <span :class="{'inline-block animate-spin': isLoading}">↻</span>
             </button>
@@ -68,98 +66,128 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 translate-y-2"
-         class="fixed bottom-5 right-5 z-50 max-w-sm p-3.5 rounded border shadow-2xl text-xs flex items-center space-x-2.5 font-sans"
+         class="fixed bottom-5 right-5 z-50 max-w-sm p-4 rounded border shadow-2xl text-xs sm:text-sm flex items-center space-x-2.5 font-sans"
          :class="{
              'bg-neutral-900 text-white border-neutral-800': toastType === 'info',
              'bg-emerald-50 text-emerald-900 border-emerald-300': toastType === 'success',
              'bg-rose-50 text-rose-900 border-rose-300': toastType === 'error'
          }">
         <span class="flex-1 font-medium" x-text="toastMsg"></span>
-        <button type="button" @click="toastShow = false" class="opacity-60 hover:opacity-100 text-sm font-bold">&times;</button>
+        <button type="button" @click="toastShow = false" class="opacity-60 hover:opacity-100 text-base font-bold">&times;</button>
     </div>
 
     <!-- KHÔNG GIAN LÀM VIỆC 2 CỘT -->
     <main class="flex-1 flex overflow-hidden relative">
 
-        <!-- ==================================================== -->
-        <!-- CỘT TRÁI (35-40%): DANH SÁCH KHÁCH HÀNG & BỘ LỌC    -->
-        <!-- ==================================================== -->
-        <section class="w-full md:w-[40%] lg:w-[35%] bg-white border-r border-neutral-200 flex flex-col shrink-0"
+        <!-- ========================================================== -->
+        <!-- CỘT TRÁI (38%): BỘ LỌC THÔNG MINH CHO 5.000 KHÁCH & DANH SÁCH -->
+        <!-- ========================================================== -->
+        <section class="w-full md:w-[40%] lg:w-[38%] bg-white border-r border-neutral-200 flex flex-col shrink-0"
                  :class="{'hidden md:flex': mobileDetailOpen, 'flex': !mobileDetailOpen}">
 
-            <!-- Thanh chuyển tab -->
-            <div class="p-3 border-b border-neutral-200 space-y-2">
-                <div class="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
+            <!-- 1. Thanh chuyển Tab nghiệp vụ chính -->
+            <div class="p-3.5 border-b border-neutral-200 space-y-3">
+                <div class="flex items-center space-x-1.5 overflow-x-auto text-xs sm:text-sm font-mono">
                     <button @click="switchTab('today')"
-                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'today' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Cần làm hôm nay (<span x-text="stats.today_due"></span>)
                     </button>
                     <button @click="switchTab('new')"
-                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'new' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Mới (<span x-text="stats.new"></span>)
                     </button>
                     <button @click="switchTab('active')"
-                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'active' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Đang chăm sóc (<span x-text="stats.active"></span>)
                     </button>
                     <button @click="switchTab('won')"
-                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'won' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Đã chốt (<span x-text="stats.won"></span>)
                     </button>
                     <button @click="switchTab('all')"
-                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'all' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Tất cả (<span x-text="stats.total"></span>)
                     </button>
                 </div>
 
-                <!-- Ô tìm kiếm & Nút mở Bộ lọc thông minh -->
-                <div class="flex items-center space-x-1.5">
+                <!-- 2. Ô tìm kiếm đa năng + Nút Bộ lọc thông minh + Sắp xếp -->
+                <div class="flex items-center space-x-2">
                     <div class="relative flex-1">
                         <input type="text" x-model="searchQuery" @input="applyLocalFilters()"
                                placeholder="Tìm tài khoản, họ tên, ngành, ghi chú..."
-                               class="w-full text-xs pl-7 pr-7 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
-                        <span class="absolute left-2.5 top-1.5 text-neutral-400 text-xs font-mono">⚲</span>
+                               class="w-full text-xs sm:text-sm pl-8 pr-8 py-2 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
+                        <span class="absolute left-2.5 top-2 text-neutral-400 text-sm font-mono">⚲</span>
                         <button x-show="searchQuery" @click="searchQuery = ''; applyLocalFilters();"
-                                class="absolute right-2 top-1.5 text-neutral-400 hover:text-black text-xs font-bold font-mono">✕</button>
+                                class="absolute right-2.5 top-2 text-neutral-400 hover:text-black text-sm font-bold font-mono">✕</button>
                     </div>
 
-                    <!-- Nút bật/tắt Bộ lọc nâng cao -->
+                    <!-- Nút mở/đóng Khung Bộ lọc nâng cao -->
                     <button @click="showAdvancedFilter = !showAdvancedFilter"
-                            class="px-2.5 py-1.5 border rounded text-xs font-mono transition flex items-center space-x-1 shrink-0"
+                            class="px-3 py-2 border rounded text-xs sm:text-sm font-mono transition flex items-center space-x-1.5 shrink-0"
                             :class="showAdvancedFilter || activeFilterCount > 0 ? 'bg-black text-white border-black font-bold' : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50'">
                         <span>Lọc</span>
-                        <span x-show="activeFilterCount > 0" class="px-1 py-0.2 bg-white text-black rounded text-[10px] font-bold" x-text="activeFilterCount"></span>
-                        <span x-text="showAdvancedFilter ? '▲' : '▼'" class="text-[9px]"></span>
+                        <span x-show="activeFilterCount > 0" class="px-1.5 py-0.2 bg-white text-black rounded text-[11px] font-bold" x-text="activeFilterCount"></span>
+                        <span x-text="showAdvancedFilter ? '▲' : '▼'" class="text-[10px]"></span>
                     </button>
 
                     <!-- Sắp xếp nhanh -->
                     <select x-model="sortBy" @change="applyLocalFilters()"
-                            class="text-[11px] font-mono border border-neutral-300 rounded px-2 py-1.5 bg-white text-neutral-700 focus:outline-none max-w-[125px]">
-                        <option value="default">Ưu tiên mặc định</option>
-                        <option value="score_desc">Điểm cao nhất</option>
+                            class="text-xs sm:text-sm font-mono border border-neutral-300 rounded px-2.5 py-2 bg-white text-neutral-700 focus:outline-none max-w-[140px]">
+                        <option value="default">Ưu tiên hôm nay</option>
+                        <option value="created_desc">Mới tải lên nhất</option>
+                        <option value="score_desc">Điểm AI cao nhất</option>
                         <option value="followers_desc">Nhiều flw nhất</option>
                         <option value="reels_desc">Nhiều Reels nhất</option>
                         <option value="updated_desc">Mới cập nhật</option>
                     </select>
                 </div>
 
-                <!-- Khung Bộ Lọc Nâng Cao (Mở rộng/Thu gọn) -->
+                <!-- 3. KHUNG BỘ LỌC ĐA TẦNG CHO BÀI TOÁN 5.000 KHÁCH (MỞ RỘNG / THU GỌN) -->
                 <div x-show="showAdvancedFilter" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-2"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     class="p-3 bg-neutral-50 border border-neutral-200 rounded space-y-2.5 text-xs font-mono">
+                     class="p-3.5 bg-neutral-50 border border-neutral-200 rounded space-y-3 text-xs sm:text-sm font-mono shadow-inner">
                     
-                    <div class="grid grid-cols-2 gap-2">
-                        <!-- Tiêu chí 1: Mức điểm AI -->
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Tiêu chí 1: ĐỢT TẢI LÊN (BATCH) - GIẢI QUYẾT BÀI TOÁN TẬP KHÁCH MỚI -->
                         <div>
-                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Mức điểm AI</label>
-                            <select x-model="scoreFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                📅 Đợt tải lên (Mẻ khách)
+                            </label>
+                            <select x-model="batchFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Tất cả các đợt</option>
+                                <option value="today">🔥 Đợt mới hôm nay</option>
+                                <option value="last_3d">3 ngày qua</option>
+                                <option value="last_7d">7 ngày qua</option>
+                                <option value="last_30d">30 ngày qua</option>
+                                <option value="older">Các đợt cũ hơn</option>
+                            </select>
+                        </div>
+
+                        <!-- Tiêu chí 2: TÌNH TRẠNG PHÂN BỔ (AI ĐANG PHỤ TRÁCH) -->
+                        <div>
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                👤 Người phụ trách
+                            </label>
+                            <select x-model="assignmentFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                                <option value="all">Tất cả khách hàng</option>
+                                <option value="unassigned">Chưa ai nhận (Mới tinh)</option>
+                                <option value="assigned">Đã có người phụ trách</option>
+                            </select>
+                        </div>
+
+                        <!-- Tiêu chí 3: Mức điểm đánh giá AI -->
+                        <div>
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                ⭐ Mức điểm AI
+                            </label>
+                            <select x-model="scoreFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi mức điểm</option>
                                 <option value="vip">≥ 80 điểm (Khách VIP)</option>
                                 <option value="qualified">65 – 79 điểm (Đạt chuẩn)</option>
@@ -168,10 +196,12 @@
                             </select>
                         </div>
 
-                        <!-- Tiêu chí 2: Quy mô Followers -->
+                        <!-- Tiêu chí 4: Quy mô người theo dõi (Followers) -->
                         <div>
-                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Người theo dõi (Flw)</label>
-                            <select x-model="followersFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                👥 Người theo dõi
+                            </label>
+                            <select x-model="followersFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi quy mô</option>
                                 <option value="micro">&lt; 5.000 flw (Micro)</option>
                                 <option value="growth">5.000 – 25.000 flw (Tăng trưởng)</option>
@@ -181,10 +211,12 @@
                             </select>
                         </div>
 
-                        <!-- Tiêu chí 3: Tần suất đăng Reels -->
+                        <!-- Tiêu chí 5: Số lượng Reels 30 ngày -->
                         <div>
-                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Số Reels / 30 ngày</label>
-                            <select x-model="reelsFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                🎬 Reels / 30 ngày
+                            </label>
+                            <select x-model="reelsFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi tần suất</option>
                                 <option value="high">≥ 12 reels (Rất tích cực)</option>
                                 <option value="medium">6 – 11 reels (Đều đặn)</option>
@@ -192,10 +224,12 @@
                             </select>
                         </div>
 
-                        <!-- Tiêu chí 4: Lĩnh vực / Ngành nghề -->
+                        <!-- Tiêu chí 6: Lĩnh vực / Ngành nghề -->
                         <div>
-                            <label class="block text-[10px] uppercase font-bold text-neutral-600 mb-1">Ngành nghề / Niche</label>
-                            <select x-model="industryFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
+                                🏷️ Ngành nghề / Niche
+                            </label>
+                            <select x-model="industryFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Tất cả ngành nghề</option>
                                 <template x-for="ind in availableIndustries" :key="ind">
                                     <option :value="ind" x-text="ind"></option>
@@ -206,66 +240,66 @@
 
                     <!-- Ô nhập Followers tùy chọn khi chọn 'custom' -->
                     <div x-show="followersFilter === 'custom'" class="flex items-center space-x-2 pt-1">
-                        <input type="number" x-model.number="customMinFollowers" @input="applyLocalFilters()" placeholder="Flw tối thiểu (Min)" class="flex-1 text-xs p-1 border border-neutral-300 rounded bg-white">
+                        <input type="number" x-model.number="customMinFollowers" @input="applyLocalFilters()" placeholder="Flw tối thiểu (Min)" class="flex-1 text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white font-mono">
                         <span class="text-neutral-400">-</span>
-                        <input type="number" x-model.number="customMaxFollowers" @input="applyLocalFilters()" placeholder="Flw tối đa (Max)" class="flex-1 text-xs p-1 border border-neutral-300 rounded bg-white">
+                        <input type="number" x-model.number="customMaxFollowers" @input="applyLocalFilters()" placeholder="Flw tối đa (Max)" class="flex-1 text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white font-mono">
                     </div>
 
-                    <!-- Thanh nút Đặt lại bộ lọc -->
-                    <div class="flex items-center justify-between pt-1.5 border-t border-neutral-200 text-[11px]">
+                    <!-- Nút xóa bộ lọc -->
+                    <div class="flex items-center justify-between pt-2 border-t border-neutral-200 text-xs sm:text-sm">
                         <span class="text-neutral-500 font-sans">
-                            Tìm thấy: <b class="text-black" x-text="filteredLeads.length"></b> / <span x-text="leads.length"></span> khách
+                            Tìm thấy: <b class="text-black font-mono text-sm" x-text="filteredLeads.length"></b> / <span x-text="leads.length"></span> khách
                         </span>
-                        <button type="button" @click="resetFilters()" class="text-rose-600 hover:text-rose-800 font-medium">
-                            Xóa toàn bộ bộ lọc
+                        <button type="button" @click="resetFilters()" class="text-rose-600 hover:text-rose-800 font-bold transition">
+                            Xóa toàn bộ bộ lọc ✕
                         </button>
                     </div>
                 </div>
 
-                <!-- Dòng hiển thị kết quả & Các thẻ lọc đang bật -->
-                <div class="flex items-center justify-between text-[11px] font-mono text-neutral-500 pt-1">
+                <!-- 4. Thanh đếm kết quả nhỏ -->
+                <div class="flex items-center justify-between text-xs font-mono text-neutral-500 pt-0.5">
                     <div>
-                        Hiển thị: <b class="text-neutral-900" x-text="filteredLeads.length"></b> khách
+                        Hiển thị: <b class="text-neutral-900 text-sm" x-text="filteredLeads.length"></b> khách
                         <span x-show="activeFilterCount > 0" class="text-neutral-400 font-sans">(Đang áp dụng <span x-text="activeFilterCount"></span> tiêu chí lọc)</span>
                     </div>
-                    <button x-show="activeFilterCount > 0" @click="resetFilters()" class="text-xs text-neutral-400 hover:text-black">
+                    <button x-show="activeFilterCount > 0" @click="resetFilters()" class="text-xs text-neutral-500 hover:text-black font-sans font-bold">
                         Xóa lọc ✕
                     </button>
                 </div>
             </div>
 
-            <!-- Danh sách thẻ khách hàng cuộn dọc -->
+            <!-- 5. Danh sách thẻ khách hàng cuộn dọc -->
             <div class="flex-1 overflow-y-auto divide-y divide-neutral-100 select-text">
                 <template x-if="isLoading && leads.length === 0">
-                    <div class="p-8 text-center text-neutral-400 text-xs">
+                    <div class="p-8 text-center text-neutral-400 text-sm">
                         <span class="inline-block animate-spin mr-1.5">↻</span> Đang tải danh sách khách hàng từ máy chủ...
                     </div>
                 </template>
 
                 <template x-if="!isLoading && filteredLeads.length === 0">
-                    <div class="p-8 text-center text-neutral-400 text-xs space-y-1">
-                        <p class="font-bold text-neutral-600">Không có khách hàng nào phù hợp</p>
-                        <p class="text-[11px]">Hãy kiểm tra lại bộ lọc hoặc đẩy thêm khách từ phần mềm Instool.</p>
+                    <div class="p-8 text-center text-neutral-400 text-sm space-y-1">
+                        <p class="font-bold text-neutral-700">Không có khách hàng nào phù hợp</p>
+                        <p class="text-xs text-neutral-500">Hãy kiểm tra lại bộ lọc hoặc đẩy thêm mẻ khách mới từ phần mềm Instool.</p>
                     </div>
                 </template>
 
                 <template x-for="lead in filteredLeads" :key="lead.id || lead.username">
                     <div @click="selectLead(lead)"
-                         class="p-3.5 hover:bg-neutral-50 transition cursor-pointer flex items-start space-x-3"
+                         class="p-4 hover:bg-neutral-50 transition cursor-pointer flex items-start space-x-3.5"
                          :class="selectedLead && selectedLead.username === lead.username ? 'bg-neutral-50 border-l-4 border-black' : ''">
                         
-                        <!-- Avatar chữ cái đại diện -->
-                        <div class="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 uppercase font-mono">
+                        <!-- Avatar chữ cái -->
+                        <div class="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase font-mono shadow-2xs">
                             <span x-text="lead.username.charAt(0)"></span>
                         </div>
 
                         <!-- Thông tin tóm tắt -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-0.5">
-                                <span class="font-mono font-bold text-xs text-neutral-900 truncate">@<span x-text="lead.username"></span></span>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-mono font-bold text-sm text-neutral-900 truncate">@<span x-text="lead.username"></span></span>
                                 
                                 <!-- Điểm đánh giá AI -->
-                                <span class="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded border shrink-0"
+                                <span class="font-mono text-xs font-bold px-2 py-0.5 rounded border shrink-0"
                                       :class="{
                                           'bg-emerald-50 text-emerald-800 border-emerald-300': (lead.fit_score || 0) >= 80,
                                           'bg-blue-50 text-blue-800 border-blue-200': (lead.fit_score || 0) >= 65 && (lead.fit_score || 0) < 80,
@@ -275,15 +309,15 @@
                                 </span>
                             </div>
 
-                            <div class="text-[11px] text-neutral-600 truncate mb-1">
+                            <div class="text-xs text-neutral-600 truncate mb-1.5 font-medium">
                                 <span x-text="lead.full_name || lead.detected_industry || 'Chưa cập nhật họ tên'"></span>
                             </div>
 
-                            <!-- Chỉ số người theo dõi & Trạng thái -->
-                            <div class="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                            <!-- Meta info: Followers + Status -->
+                            <div class="flex items-center justify-between text-xs font-mono text-neutral-400">
                                 <span><span x-text="formatNumber(lead.followers)"></span> người theo dõi</span>
                                 
-                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold"
+                                <span class="px-2 py-0.5 rounded border text-[11px] font-bold"
                                       :class="{
                                           'bg-neutral-100 text-neutral-700 border-neutral-300': lead.sale_status === 'New',
                                           'bg-blue-50 text-blue-800 border-blue-300': lead.sale_status === 'Contacted',
@@ -302,71 +336,71 @@
 
 
         <!-- ============================================================= -->
-        <!-- CỘT PHẢI (60-65%): CHI TIẾT KHÁCH HÀNG & BÀN LÀM VIỆC TIẾP CẬN -->
+        <!-- CỘT PHẢI (62%): CHI TIẾT KHÁCH HÀNG & BÀN LÀM VIỆC TIẾP CẬN -->
         <!-- ============================================================= -->
         <section class="flex-1 bg-neutral-50 flex flex-col overflow-y-auto select-text"
                  :class="{'flex': mobileDetailOpen, 'hidden md:flex': !mobileDetailOpen}">
 
             <template x-if="!selectedLead">
-                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-neutral-400 text-xs">
-                    <div class="w-12 h-12 rounded-full border border-neutral-300 flex items-center justify-center text-lg mb-2 text-neutral-500">
+                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-neutral-400 text-sm">
+                    <div class="w-14 h-14 rounded-full border border-neutral-300 flex items-center justify-center text-2xl mb-3 text-neutral-500">
                         ☞
                     </div>
-                    <p class="font-bold text-neutral-700 uppercase tracking-wide">Chọn một khách hàng để bắt đầu</p>
-                    <p class="text-[11px] text-neutral-500 max-w-sm mt-1">
+                    <p class="font-bold text-neutral-800 text-base uppercase tracking-wide">Chọn một khách hàng để bắt đầu</p>
+                    <p class="text-xs text-neutral-500 max-w-sm mt-1.5 leading-relaxed">
                         Xem chi tiết đánh giá AI, điểm đau trong video, kịch bản tin nhắn cá nhân hóa và nút 1 chạm mở Instagram chat.
                     </p>
                 </div>
             </template>
 
             <template x-if="selectedLead">
-                <div class="p-4 md:p-6 space-y-4 max-w-4xl mx-auto w-full">
+                <div class="p-5 md:p-7 space-y-5 max-w-4xl mx-auto w-full">
 
-                    <!-- Nút quay lại dành riêng cho màn hình điện thoại -->
-                    <div class="md:hidden pb-2 border-b border-neutral-200">
+                    <!-- Nút quay lại trên Mobile -->
+                    <div class="md:hidden pb-2.5 border-b border-neutral-200">
                         <button @click="mobileDetailOpen = false" class="text-xs font-mono font-bold text-neutral-700 flex items-center space-x-1">
                             <span>&larr;</span> <span>Quay lại danh sách khách hàng</span>
                         </button>
                     </div>
 
                     <!-- 1. HỒ SƠ TỔNG QUAN KHÁCH HÀNG -->
-                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <h2 class="text-base font-bold font-mono text-neutral-900">@<span x-text="selectedLead.username"></span></h2>
+                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center space-x-2.5">
+                                <h2 class="text-lg font-bold font-mono text-neutral-900">@<span x-text="selectedLead.username"></span></h2>
                                 <a :href="'https://instagram.com/' + selectedLead.username" target="_blank"
-                                   class="px-2 py-0.5 border border-neutral-300 hover:border-black rounded text-[11px] font-mono text-neutral-700 hover:text-black transition inline-flex items-center space-x-1">
+                                   class="px-2.5 py-1 border border-neutral-300 hover:border-black rounded text-xs font-mono text-neutral-700 hover:text-black transition inline-flex items-center space-x-1 shadow-2xs">
                                     <span>Xem trang cá nhân</span>
                                     <span>↗</span>
                                 </a>
                             </div>
-                            <div class="text-xs text-neutral-700 font-medium" x-text="selectedLead.full_name || 'Chưa cập nhật họ tên'"></div>
-                            <div class="text-[11px] text-neutral-500 leading-relaxed max-w-xl" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
+                            <div class="text-sm text-neutral-800 font-semibold" x-text="selectedLead.full_name || 'Chưa cập nhật họ tên'"></div>
+                            <div class="text-xs text-neutral-600 leading-relaxed max-w-xl" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
                         </div>
 
                         <!-- Các chỉ số chính -->
-                        <div class="flex sm:flex-col items-end gap-1.5 text-xs font-mono shrink-0">
-                            <div class="text-neutral-700">
+                        <div class="flex sm:flex-col items-end gap-1.5 text-xs sm:text-sm font-mono shrink-0">
+                            <div class="text-neutral-800">
                                 <b><span x-text="formatNumber(selectedLead.followers)"></span></b> Người theo dõi
                             </div>
-                            <div class="text-neutral-500 text-[11px]">
+                            <div class="text-neutral-600 text-xs">
                                 <b><span x-text="selectedLead.reels_last_30d || 0"></span></b> Reels trong 30 ngày
                             </div>
-                            <div class="text-[10px] text-neutral-400" x-text="selectedLead.detected_industry || selectedLead.category_name || 'Chưa phân loại ngành'"></div>
+                            <div class="text-[11px] text-neutral-400 font-sans" x-text="selectedLead.detected_industry || selectedLead.category_name || 'Chưa phân loại ngành'"></div>
                         </div>
                     </div>
 
 
                     <!-- 2. ĐÁNH GIÁ NHU CẦU TỪ AI (GỒM 4 THANH TIÊU CHÍ & ĐIỂM LƯU Ý BẮT CHUYỆN) -->
-                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
+                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
                             <div class="flex items-center space-x-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Đánh giá Nhu cầu từ AI</h3>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Đánh giá Nhu cầu từ AI</h3>
                             </div>
-                            <div class="font-mono text-xs font-bold flex items-center space-x-1.5">
-                                <span class="text-neutral-500 text-[11px]">Tổng điểm:</span>
-                                <span class="px-2 py-0.5 rounded text-xs border"
+                            <div class="font-mono text-xs sm:text-sm font-bold flex items-center space-x-2">
+                                <span class="text-neutral-500 text-xs font-sans">Tổng điểm:</span>
+                                <span class="px-2.5 py-1 rounded text-sm border font-extrabold"
                                       :class="{
                                           'bg-emerald-50 text-emerald-800 border-emerald-300': (selectedLead.fit_score || 0) >= 80,
                                           'bg-blue-50 text-blue-800 border-blue-200': (selectedLead.fit_score || 0) >= 65 && (selectedLead.fit_score || 0) < 80,
@@ -378,75 +412,75 @@
                         </div>
 
                         <!-- 4 Thanh tiến trình tiêu chí thành phần (Thang điểm 100) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-mono">
                             <div>
-                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                <div class="flex justify-between mb-1 text-neutral-600">
                                     <span>1. Cam kết làm video:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 0) + '/100'"></span>
+                                    <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.video_volume || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-2">
+                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.video_volume || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
-                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                <div class="flex justify-between mb-1 text-neutral-600">
                                     <span>2. Nhu cầu tối ưu giữ chân &amp; Hook:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 0) + '/100'"></span>
+                                    <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.engagement_gap || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-2">
+                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.engagement_gap || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
-                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                <div class="flex justify-between mb-1 text-neutral-600">
                                     <span>3. Khả năng chi trả:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.monetization || 0) + '/100'"></span>
+                                    <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.monetization || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.monetization || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-2">
+                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.monetization || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
-                                <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
+                                <div class="flex justify-between mb-1 text-neutral-600">
                                     <span>4. Dấu hiệu thiếu thời gian tự dựng:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0) + '/100'"></span>
+                                    <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-2">
+                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0)) + '%'"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Khung Điểm Lưu Ý Khi Trò Chuyện (Được định dạng ngắn gọn, súc tích) -->
-                        <div class="bg-neutral-50 border border-neutral-200 rounded p-3 text-xs space-y-2">
+                        <!-- Khung Điểm Lưu Ý Khi Trò Chuyện (Đọc trong 3 giây) -->
+                        <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-2.5">
                             <div class="flex items-center justify-between">
-                                <span class="font-bold text-[11px] uppercase tracking-wider text-neutral-800 font-mono">
+                                <span class="font-bold text-xs uppercase tracking-wider text-neutral-800 font-mono">
                                     Điểm lưu ý khi bắt chuyện (Gợi ý từ AI):
                                 </span>
-                                <span class="text-[10px] text-neutral-400 font-mono">Đọc trong 3 giây</span>
+                                <span class="text-xs text-neutral-400 font-mono">Đọc trong 3 giây</span>
                             </div>
 
-                            <div class="space-y-2">
+                            <div class="space-y-2.5">
                                 <template x-for="(point, idx) in (selectedLead.ai_evidence_parsed || [])" :key="idx">
-                                    <div class="p-2.5 bg-white rounded border border-neutral-200/90 shadow-2xs space-y-1">
-                                        <div class="flex items-center space-x-1.5">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
-                                            <span class="font-bold text-[11px] text-neutral-900" x-text="getEvidenceTitle(point)"></span>
+                                    <div class="p-3 bg-white rounded border border-neutral-200/90 shadow-2xs space-y-1.5">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="w-2 h-2 rounded-full bg-black"></span>
+                                            <span class="font-bold text-xs text-neutral-900" x-text="getEvidenceTitle(point)"></span>
                                         </div>
-                                        <p class="text-neutral-700 text-xs leading-relaxed" x-text="getEvidenceText(point)"></p>
+                                        <p class="text-neutral-700 text-xs sm:text-sm leading-relaxed" x-text="getEvidenceText(point)"></p>
                                         <template x-if="point && point.excerpt">
-                                            <p class="text-[10px] text-neutral-500 bg-neutral-50 px-2 py-1 rounded border border-neutral-100 font-mono">
-                                                <span class="font-bold text-neutral-600">Dẫn chứng:</span> "<span x-text="point.excerpt"></span>"
+                                            <p class="text-xs text-neutral-500 bg-neutral-50 px-2.5 py-1.5 rounded border border-neutral-100 font-mono">
+                                                <span class="font-bold text-neutral-700">Dẫn chứng:</span> "<span x-text="point.excerpt"></span>"
                                             </p>
                                         </template>
                                     </div>
                                 </template>
 
                                 <template x-if="!selectedLead.ai_evidence_parsed || selectedLead.ai_evidence_parsed.length === 0">
-                                    <p class="text-neutral-400 italic text-[11px]">
+                                    <p class="text-neutral-400 italic text-xs">
                                         Khách hàng có tiềm năng tốt, nên đề xuất dựng thử 1 video ngắn từ video cũ để chứng minh nhịp cắt và hiệu ứng hook 3 giây đầu.
                                     </p>
                                 </template>
@@ -456,110 +490,110 @@
 
 
                     <!-- 3. KỊCH BẢN TIN NHẮN CHÀO HỎI GỢI Ý & TIẾP CẬN NHANH -->
-                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Kịch Bản Tin Nhắn Chào Hỏi Gợi Ý</h3>
-                            <span class="text-[11px] font-mono text-neutral-400">AI tạo sẵn riêng cho khách này</span>
+                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Kịch Bản Tin Nhắn Chào Hỏi Gợi Ý</h3>
+                            <span class="text-xs font-mono text-neutral-400">AI tạo sẵn riêng cho khách này</span>
                         </div>
 
-                        <!-- Khung soạn và xem trước tin nhắn -->
+                        <!-- Khung soạn tin nhắn -->
                         <div>
                             <textarea x-model="selectedLead.suggested_dm" rows="4"
                                       placeholder="Nội dung tin nhắn chào hỏi gửi khách hàng..."
-                                      class="w-full text-xs font-sans p-3 border border-neutral-300 rounded focus:outline-none focus:border-black leading-relaxed"></textarea>
+                                      class="w-full text-xs sm:text-sm font-sans p-3.5 border border-neutral-300 rounded focus:outline-none focus:border-black leading-relaxed"></textarea>
                         </div>
 
-                        <!-- Các nút thao tác tiếp cận -->
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                        <!-- Các nút tiếp cận 1 chạm -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             <button @click="copyDmAndOpenChat(selectedLead)"
-                                    class="flex-1 py-2.5 px-4 bg-black hover:bg-neutral-800 text-white rounded text-xs font-bold transition flex items-center justify-center space-x-2 shadow-sm">
+                                    class="flex-1 py-3 px-5 bg-black hover:bg-neutral-800 text-white rounded text-sm font-bold transition flex items-center justify-center space-x-2 shadow-sm">
                                 <span>⚡</span>
                                 <span>Sao chép tin nhắn &amp; Mở hộp thư Instagram</span>
-                                <span class="text-neutral-400 font-mono text-[11px]">(ig.me/m/...)</span>
+                                <span class="text-neutral-400 font-mono text-xs">(ig.me/m/...)</span>
                             </button>
 
                             <button @click="copyOnlyDm(selectedLead.suggested_dm)"
-                                    class="py-2.5 px-3 border border-neutral-300 hover:border-black rounded text-xs font-medium bg-white text-neutral-700 transition">
+                                    class="py-3 px-4 border border-neutral-300 hover:border-black rounded text-xs sm:text-sm font-semibold bg-white text-neutral-700 transition shadow-2xs">
                                 Chỉ sao chép tin nhắn
                             </button>
                         </div>
-                        <p class="text-[10px] text-neutral-400 italic">
-                            * Bấm nút sẽ tự động sao chép tin nhắn vào máy, mở hộp thư Instagram của khách, chuyển trạng thái sang "Đã gửi tin" và đặt lịch nhắc lại sau 3 ngày.
+                        <p class="text-xs text-neutral-400 italic">
+                            * Bấm nút sẽ tự động sao chép tin nhắn, mở hộp thư Instagram của khách, chuyển trạng thái sang "Đã gửi tin" và đặt lịch nhắc lại sau 3 ngày.
                         </p>
                     </div>
 
 
-                    <!-- 4. TIẾN ĐỘ CHĂM SÓC KHÁCH HÀNG (QUY TRÌNH BÁN HÀNG) -->
-                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-sm space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-900">Tiến Độ Chăm Sóc Khách Hàng</h3>
-                            <span class="text-[11px] font-mono text-neutral-400" x-text="'Cập nhật lúc: ' + (selectedLead.updated_at || 'Mới')"></span>
+                    <!-- 4. TIẾN ĐỘ CHĂM SÓC KHÁCH HÀNG -->
+                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Tiến Độ Chăm Sóc Khách Hàng</h3>
+                            <span class="text-xs font-mono text-neutral-400" x-text="'Cập nhật lúc: ' + (selectedLead.updated_at || 'Mới')"></span>
                         </div>
 
-                        <!-- Lựa chọn trạng thái chăm sóc -->
+                        <!-- Trạng thái chăm sóc -->
                         <div class="space-y-1.5">
                             <label class="block text-xs font-semibold text-neutral-700">Trạng thái chăm sóc:</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 text-xs font-mono">
+                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs sm:text-sm font-mono">
                                 <button type="button" @click="selectedLead.sale_status = 'New'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'New' ? 'bg-black text-white border-black' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Mới
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Contacted'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Contacted' ? 'bg-blue-600 text-white border-blue-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Đã gửi tin
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'In_Discussion'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'In_Discussion' ? 'bg-amber-600 text-white border-amber-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Đang trao đổi
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Demo_Sent'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Demo_Sent' ? 'bg-purple-600 text-white border-purple-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Đã gửi video mẫu
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Won'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Won' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
-                                    Chốt đơn thành công ★
+                                    Chốt đơn ★
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Lost'"
-                                        class="py-1.5 px-2 rounded border text-center transition font-bold"
+                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Lost' ? 'bg-rose-600 text-white border-rose-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Từ chối
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Lịch hẹn nhắc lại & Người phụ trách -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <!-- Lịch hẹn & Người phụ trách -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs sm:text-sm">
                             <div>
                                 <label class="block font-semibold text-neutral-700 mb-1">Lịch hẹn liên hệ lại:</label>
                                 <input type="datetime-local" x-model="selectedLead.follow_up_at"
-                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-mono focus:outline-none focus:border-black">
+                                       class="w-full border border-neutral-300 rounded px-3.5 py-2 font-mono focus:outline-none focus:border-black">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-neutral-700 mb-1">Người phụ trách:</label>
                                 <input type="text" x-model="selectedLead.sale_assigned_to" placeholder="Ví dụ: Hoàng Nam"
-                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-sans focus:outline-none focus:border-black">
+                                       class="w-full border border-neutral-300 rounded px-3.5 py-2 font-sans focus:outline-none focus:border-black">
                             </div>
                         </div>
 
-                        <!-- Ghi chú trao đổi -->
-                        <div class="space-y-1">
+                        <!-- Ghi chú chăm sóc -->
+                        <div class="space-y-1.5">
                             <label class="block text-xs font-semibold text-neutral-700">Ghi chú trao đổi (Nhu cầu, phản hồi của khách, hẹn báo giá):</label>
                             <textarea x-model="selectedLead.sale_note" rows="2"
                                       placeholder="Ghi chú nhanh: Khách hẹn thứ 6 gửi video gốc, thích phong cách cắt nhịp nhanh..."
-                                      class="w-full text-xs font-sans p-2.5 border border-neutral-300 rounded focus:outline-none focus:border-black"></textarea>
+                                      class="w-full text-xs sm:text-sm font-sans p-3 border border-neutral-300 rounded focus:outline-none focus:border-black"></textarea>
                         </div>
 
                         <!-- Nút lưu tiến độ -->
                         <div class="flex justify-end pt-2">
                             <button @click="saveLeadProgress(selectedLead)" :disabled="isSaving"
-                                    class="py-2 px-6 bg-black hover:bg-neutral-800 text-white rounded text-xs font-bold transition shadow-sm disabled:opacity-50 flex items-center space-x-1.5">
+                                    class="py-2.5 px-6 bg-black hover:bg-neutral-800 text-white rounded text-sm font-bold transition shadow-sm disabled:opacity-50 flex items-center space-x-2">
                                 <span x-show="isSaving" class="inline-block animate-spin mr-1">↻</span>
                                 <span x-text="isSaving ? 'Đang lưu lên máy chủ...' : 'Lưu tiến độ chăm sóc'"></span>
                             </button>
@@ -579,6 +613,8 @@
                 currentTab: 'today',
                 searchQuery: '',
                 showAdvancedFilter: false,
+                batchFilter: 'all',
+                assignmentFilter: 'all',
                 scoreFilter: 'all',
                 followersFilter: 'all',
                 customMinFollowers: '',
@@ -598,6 +634,33 @@
                 toastMsg: '',
                 toastType: 'info',
 
+                get activeFilterCount() {
+                    let count = 0;
+                    if (this.searchQuery.trim()) count++;
+                    if (this.batchFilter !== 'all') count++;
+                    if (this.assignmentFilter !== 'all') count++;
+                    if (this.scoreFilter !== 'all') count++;
+                    if (this.followersFilter !== 'all') count++;
+                    if (this.reelsFilter !== 'all') count++;
+                    if (this.industryFilter !== 'all') count++;
+                    if (this.sortBy !== 'default') count++;
+                    return count;
+                },
+
+                resetFilters() {
+                    this.searchQuery = '';
+                    this.batchFilter = 'all';
+                    this.assignmentFilter = 'all';
+                    this.scoreFilter = 'all';
+                    this.followersFilter = 'all';
+                    this.customMinFollowers = '';
+                    this.customMaxFollowers = '';
+                    this.reelsFilter = 'all';
+                    this.industryFilter = 'all';
+                    this.sortBy = 'default';
+                    this.applyLocalFilters();
+                },
+
                 showToast(msg, type = 'info', duration = 4000) {
                     this.toastMsg = msg;
                     this.toastType = type;
@@ -612,11 +675,11 @@
 
                 getSaleStatusLabel(st) {
                     const map = {
-                        'New': 'Mới tiếp nhận',
+                        'New': 'Mới',
                         'Contacted': 'Đã gửi tin',
                         'In_Discussion': 'Đang trao đổi',
                         'Demo_Sent': 'Đã gửi video mẫu',
-                        'Won': 'Chốt đơn thành công ★',
+                        'Won': 'Chốt đơn ★',
                         'Lost': 'Từ chối'
                     };
                     return map[st] || st || 'Mới';
@@ -665,9 +728,8 @@
                     try {
                         const params = new URLSearchParams();
                         params.set('tab', this.currentTab);
-                        if (this.searchQuery.trim()) {
-                            params.set('search', this.searchQuery.trim());
-                        }
+                        if (this.batchFilter !== 'all') params.set('batch', this.batchFilter);
+                        if (this.assignmentFilter !== 'all') params.set('assigned_to', this.assignmentFilter);
 
                         const res = await fetch('/api/leads?' + params.toString());
                         const data = await res.json();
@@ -701,29 +763,6 @@
                     }
                 },
 
-                get activeFilterCount() {
-                    let count = 0;
-                    if (this.searchQuery.trim()) count++;
-                    if (this.scoreFilter !== 'all') count++;
-                    if (this.followersFilter !== 'all') count++;
-                    if (this.reelsFilter !== 'all') count++;
-                    if (this.industryFilter !== 'all') count++;
-                    if (this.sortBy !== 'default') count++;
-                    return count;
-                },
-
-                resetFilters() {
-                    this.searchQuery = '';
-                    this.scoreFilter = 'all';
-                    this.followersFilter = 'all';
-                    this.customMinFollowers = '';
-                    this.customMaxFollowers = '';
-                    this.reelsFilter = 'all';
-                    this.industryFilter = 'all';
-                    this.sortBy = 'default';
-                    this.applyLocalFilters();
-                },
-
                 applyLocalFilters() {
                     let list = [...this.leads];
 
@@ -740,7 +779,32 @@
                         });
                     }
 
-                    // 2. Mức điểm đánh giá AI
+                    // 2. Lọc theo Đợt tải lên (Batch)
+                    if (this.batchFilter !== 'all') {
+                        const now = new Date();
+                        const todayStr = now.toISOString().slice(0, 10);
+                        list = list.filter(l => {
+                            if (!l.created_at) return true;
+                            const createdDate = l.created_at.slice(0, 10);
+                            if (this.batchFilter === 'today') return createdDate === todayStr;
+                            
+                            const diffDays = Math.floor((now - new Date(l.created_at)) / (1000 * 60 * 60 * 24));
+                            if (this.batchFilter === 'last_3d') return diffDays <= 3;
+                            if (this.batchFilter === 'last_7d') return diffDays <= 7;
+                            if (this.batchFilter === 'last_30d') return diffDays <= 30;
+                            if (this.batchFilter === 'older') return diffDays > 30;
+                            return true;
+                        });
+                    }
+
+                    // 3. Lọc theo Tình trạng phân bổ
+                    if (this.assignmentFilter === 'unassigned') {
+                        list = list.filter(l => !l.sale_assigned_to || !l.sale_assigned_to.trim());
+                    } else if (this.assignmentFilter === 'assigned') {
+                        list = list.filter(l => l.sale_assigned_to && l.sale_assigned_to.trim());
+                    }
+
+                    // 4. Mức điểm đánh giá AI
                     if (this.scoreFilter === 'vip' || this.scoreFilter === '80') {
                         list = list.filter(l => (l.fit_score || 0) >= 80);
                     } else if (this.scoreFilter === 'qualified' || this.scoreFilter === '65') {
@@ -751,7 +815,7 @@
                         list = list.filter(l => (l.fit_score || 0) < 50);
                     }
 
-                    // 3. Quy mô Followers
+                    // 5. Quy mô Followers
                     if (this.followersFilter === 'micro') {
                         list = list.filter(l => (l.followers || 0) < 5000);
                     } else if (this.followersFilter === 'growth') {
@@ -769,7 +833,7 @@
                         }
                     }
 
-                    // 4. Số Reels trong 30 ngày
+                    // 6. Số Reels trong 30 ngày
                     if (this.reelsFilter === 'high') {
                         list = list.filter(l => (l.reels_last_30d || 0) >= 12);
                     } else if (this.reelsFilter === 'medium') {
@@ -778,7 +842,7 @@
                         list = list.filter(l => (l.reels_last_30d || 0) < 6);
                     }
 
-                    // 5. Ngành nghề / Lĩnh vực
+                    // 7. Ngành nghề / Lĩnh vực
                     if (this.industryFilter !== 'all') {
                         list = list.filter(l => {
                             const ind = (l.detected_industry || l.category_name || '').trim();
@@ -786,13 +850,15 @@
                         });
                     }
 
-                    // 6. Sắp xếp kết quả
+                    // 8. Sắp xếp kết quả
                     if (this.sortBy === 'score_desc') {
                         list.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
                     } else if (this.sortBy === 'followers_desc') {
                         list.sort((a, b) => (b.followers || 0) - (a.followers || 0));
                     } else if (this.sortBy === 'reels_desc') {
                         list.sort((a, b) => (b.reels_last_30d || 0) - (a.reels_last_30d || 0));
+                    } else if (this.sortBy === 'created_desc') {
+                        list.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
                     } else if (this.sortBy === 'updated_desc') {
                         list.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
                     } else {

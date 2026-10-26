@@ -1,6 +1,7 @@
 // =========================================================================
 // Cloudflare Pages Function: /api/leads
 // Xử lý lấy danh sách khách hàng và cập nhật tiến độ bán hàng vào D1
+// Hỗ trợ mở rộng quản lý 5.000+ khách hàng theo đợt và phân bổ Sale
 // =========================================================================
 
 export async function onRequestGet(context) {
@@ -16,6 +17,8 @@ export async function onRequestGet(context) {
     const url = new URL(context.request.url);
     const tab = url.searchParams.get("tab") || "today";
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();
+    const batch = url.searchParams.get("batch") || "all";
+    const assignedTo = url.searchParams.get("assigned_to") || "all";
     const minScore = url.searchParams.get("min_score");
     const maxScore = url.searchParams.get("max_score");
     const minFollowers = url.searchParams.get("min_followers");
@@ -27,9 +30,9 @@ export async function onRequestGet(context) {
     let query = "SELECT * FROM leads WHERE 1=1";
     const params = [];
 
-    // Filter by Tab
+    // 1. Phân loại theo Tab nghiệp vụ
     if (tab === "today") {
-      // Khách mới chưa nhắn HOẶC khách đến hạn nhắc hôm nay/trễ hạn
+      // Khách mới chưa gửi tin HOẶC khách đến hạn nhắc hôm nay/trễ hạn
       query += " AND (sale_status = 'New' OR (follow_up_at IS NOT NULL AND date(follow_up_at) <= date('now', '+1 day')))";
     } else if (tab === "new") {
       query += " AND sale_status = 'New'";
@@ -41,14 +44,37 @@ export async function onRequestGet(context) {
       query += " AND sale_status = 'Lost'";
     }
 
-    // Keyword Search (username, full_name, bio, sale_note, detected_industry)
+    // 2. Lọc theo Đợt tải lên (Batch / Created Date) - Giải quyết bài toán 5.000 khách
+    if (batch === "today") {
+      query += " AND date(created_at) = date('now')";
+    } else if (batch === "last_3d") {
+      query += " AND date(created_at) >= date('now', '-3 days')";
+    } else if (batch === "last_7d") {
+      query += " AND date(created_at) >= date('now', '-7 days')";
+    } else if (batch === "last_30d") {
+      query += " AND date(created_at) >= date('now', '-30 days')";
+    } else if (batch === "older") {
+      query += " AND date(created_at) < date('now', '-30 days')";
+    }
+
+    // 3. Lọc theo Người phụ trách / Phân bổ
+    if (assignedTo === "unassigned") {
+      query += " AND (sale_assigned_to IS NULL OR sale_assigned_to = '')";
+    } else if (assignedTo === "assigned") {
+      query += " AND (sale_assigned_to IS NOT NULL AND sale_assigned_to != '')";
+    } else if (assignedTo && assignedTo !== "all") {
+      query += " AND LOWER(sale_assigned_to) LIKE ?";
+      params.push(`%${assignedTo.toLowerCase()}%`);
+    }
+
+    // 4. Tìm kiếm từ khóa đa năng
     if (search) {
       query += " AND (LOWER(username) LIKE ? OR LOWER(full_name) LIKE ? OR LOWER(sale_note) LIKE ? OR LOWER(detected_industry) LIKE ? OR LOWER(bio) LIKE ?)";
       const pattern = `%${search}%`;
       params.push(pattern, pattern, pattern, pattern, pattern);
     }
 
-    // Fit Score
+    // 5. Mức điểm AI
     if (minScore !== null && minScore !== "" && !isNaN(minScore)) {
       query += " AND fit_score >= ?";
       params.push(parseInt(minScore));
@@ -58,7 +84,7 @@ export async function onRequestGet(context) {
       params.push(parseInt(maxScore));
     }
 
-    // Followers
+    // 6. Quy mô Followers
     if (minFollowers !== null && minFollowers !== "" && !isNaN(minFollowers)) {
       query += " AND followers >= ?";
       params.push(parseInt(minFollowers));
@@ -68,38 +94,40 @@ export async function onRequestGet(context) {
       params.push(parseInt(maxFollowers));
     }
 
-    // Reels 30d
+    // 7. Số Reels trong 30 ngày
     if (minReels !== null && minReels !== "" && !isNaN(minReels)) {
       query += " AND reels_last_30d >= ?";
       params.push(parseInt(minReels));
     }
 
-    // Industry
+    // 8. Ngành nghề
     if (industry && industry !== "all") {
       query += " AND LOWER(detected_industry) LIKE ?";
       params.push(`%${industry}%`);
     }
 
-    // Sorting
+    // 9. Sắp xếp thông minh
     if (sortBy === "followers_desc") {
       query += " ORDER BY followers DESC, updated_at DESC";
     } else if (sortBy === "reels_desc") {
       query += " ORDER BY reels_last_30d DESC, updated_at DESC";
+    } else if (sortBy === "created_desc") {
+      query += " ORDER BY created_at DESC";
     } else if (sortBy === "updated_desc") {
       query += " ORDER BY updated_at DESC";
     } else if (sortBy === "score_desc") {
       query += " ORDER BY fit_score DESC, updated_at DESC";
     } else {
-      // Default: prioritize today due follow-ups, then high fit score, then latest update
-      query += " ORDER BY CASE WHEN follow_up_at IS NOT NULL AND date(follow_up_at) <= date('now', '+1 day') THEN 0 ELSE 1 END, fit_score DESC, updated_at DESC";
+      // Mặc định: Ưu tiên khách cần làm hôm nay, sau đó đến điểm cao và mới tải lên
+      query += " ORDER BY CASE WHEN follow_up_at IS NOT NULL AND date(follow_up_at) <= date('now', '+1 day') THEN 0 ELSE 1 END, fit_score DESC, created_at DESC";
     }
 
-    query += " LIMIT 500";
+    query += " LIMIT 1000";
 
     const stmt = db.prepare(query);
     const result = params.length > 0 ? await stmt.bind(...params).all() : await stmt.all();
 
-    // Parse JSON fields safely for each lead
+    // Parse JSON fields safely
     const leads = (result.results || []).map(lead => {
       let breakdown = {};
       let evidence = [];
