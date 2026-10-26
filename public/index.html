@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>INSTOOL</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,159 +10,146 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f5f5f5; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #fafafa; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+        * { -webkit-tap-highlight-color: transparent; }
         body { font-size: 14px; }
     </style>
 </head>
-<body class="bg-neutral-100 text-neutral-900 font-sans antialiased h-screen flex flex-col overflow-hidden select-none"
+<body class="bg-neutral-100 text-neutral-900 font-sans antialiased h-[100dvh] flex flex-col overflow-hidden select-none w-full max-w-full"
       x-data="salesApp()" x-init="initApp()">
 
-    <!-- THANH TIÊU ĐỀ TRÊN CÙNG (CHỈ GIỮ CHỮ INSTOOL) & THỐNG KÊ NHANH -->
-    <header class="bg-white border-b border-neutral-200 px-5 py-3 flex items-center justify-between shrink-0 shadow-sm">
-        <div class="flex items-center space-x-3.5">
-            <span class="font-extrabold tracking-tight text-base font-mono uppercase bg-black text-white px-3 py-1 rounded">INSTOOL</span>
-            <div class="hidden sm:flex items-center space-x-1.5 pl-3 border-l border-neutral-200 text-xs font-mono text-neutral-500">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Máy chủ đám mây (Đang kết nối)</span>
-            </div>
+    <!-- THANH TIÊU ĐỀ TRÊN CÙNG: CHỈ DUY NHẤT CHỮ INSTOOL & THỐNG KÊ GỌN GÀNG -->
+    <header class="bg-white border-b border-neutral-200 px-3 sm:px-5 py-2.5 flex items-center justify-between shrink-0 shadow-2xs w-full max-w-full">
+        <div class="flex items-center space-x-2 shrink-0">
+            <span class="font-extrabold tracking-tight text-sm sm:text-base font-mono uppercase bg-black text-white px-2.5 py-1 rounded">INSTOOL</span>
+            <span class="hidden lg:inline text-xs font-mono text-neutral-400 pl-2 border-l border-neutral-200">Trực tuyến</span>
         </div>
 
         <!-- Các thẻ đếm số lượng tổng quan -->
-        <div class="flex items-center space-x-2.5 text-xs sm:text-sm font-mono">
-            <div class="px-3 py-1.5 bg-amber-50 border border-amber-200 rounded text-amber-900 flex items-center space-x-1.5 font-bold shadow-2xs">
-                <span>Hôm nay cần làm:</span>
-                <span class="text-amber-800 text-sm font-extrabold" x-text="stats.today_due">0</span>
+        <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs font-mono">
+            <div class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded text-amber-900 flex items-center space-x-1 font-bold">
+                <span class="hidden sm:inline">Hôm nay cần làm:</span>
+                <span class="sm:hidden">Cần làm:</span>
+                <span class="text-amber-800 text-sm font-bold" x-text="stats.today_due">0</span>
             </div>
-            <div class="hidden md:flex px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-blue-900 items-center space-x-1.5">
-                <span>Khách mới:</span>
+            <div class="hidden sm:flex px-2.5 py-1 bg-blue-50 border border-blue-200 rounded text-blue-900 items-center space-x-1">
+                <span>Mới:</span>
                 <span class="font-bold text-sm" x-text="stats.new">0</span>
             </div>
-            <div class="hidden md:flex px-3 py-1.5 bg-neutral-100 border border-neutral-200 rounded text-neutral-800 items-center space-x-1.5">
-                <span>Đang chăm sóc:</span>
+            <div class="hidden md:flex px-2.5 py-1 bg-neutral-100 border border-neutral-200 rounded text-neutral-800 items-center space-x-1">
+                <span>Đang chăm:</span>
                 <span class="font-bold text-sm" x-text="stats.active">0</span>
             </div>
-            <div class="px-3 py-1.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 flex items-center space-x-1.5 font-bold shadow-2xs">
-                <span>Chốt đơn:</span>
-                <span class="text-emerald-800 text-sm font-extrabold" x-text="stats.won">0</span>
+            <div class="px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 flex items-center space-x-1 font-bold">
+                <span>Chốt:</span>
+                <span class="text-emerald-800 text-sm font-bold" x-text="stats.won">0</span>
             </div>
 
-            <!-- Nút tải lại dữ liệu -->
+            <!-- Nút tải lại dữ liệu thuần chữ -->
             <button @click="loadLeads(); loadStats();" :disabled="isLoading"
-                    class="p-2 border border-neutral-200 rounded hover:bg-neutral-100 text-neutral-600 transition"
-                    title="Tải lại dữ liệu">
-                <span :class="{'inline-block animate-spin': isLoading}">↻</span>
+                    class="px-2.5 py-1 border border-neutral-200 rounded hover:bg-neutral-100 text-neutral-700 transition text-xs font-sans">
+                <span x-text="isLoading ? '...' : 'Tải lại'"></span>
             </button>
         </div>
     </header>
 
     <!-- THÔNG BÁO NỔI (TOAST) -->
     <div x-show="toastShow" x-cloak
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 translate-y-2"
-         class="fixed bottom-5 right-5 z-50 max-w-sm p-4 rounded border shadow-2xl text-xs sm:text-sm flex items-center space-x-2.5 font-sans"
+         x-transition
+         class="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 p-3.5 rounded border shadow-2xl text-xs sm:text-sm flex items-center justify-between space-x-2 font-sans"
          :class="{
              'bg-neutral-900 text-white border-neutral-800': toastType === 'info',
              'bg-emerald-50 text-emerald-900 border-emerald-300': toastType === 'success',
              'bg-rose-50 text-rose-900 border-rose-300': toastType === 'error'
          }">
         <span class="flex-1 font-medium" x-text="toastMsg"></span>
-        <button type="button" @click="toastShow = false" class="opacity-60 hover:opacity-100 text-base font-bold">&times;</button>
+        <button type="button" @click="toastShow = false" class="opacity-60 hover:opacity-100 text-sm font-bold ml-2">Đóng</button>
     </div>
 
-    <!-- KHÔNG GIAN LÀM VIỆC 2 CỘT -->
-    <main class="flex-1 flex overflow-hidden relative">
+    <!-- KHÔNG GIAN LÀM VIỆC 2 CỘT (TỐI ƯU 100% MOBILE & DESKTOP) -->
+    <main class="flex-1 flex overflow-hidden relative w-full max-w-full">
 
         <!-- ========================================================== -->
-        <!-- CỘT TRÁI (38%): BỘ LỌC THÔNG MINH CHO 5.000 KHÁCH & DANH SÁCH -->
+        <!-- CỘT TRÁI: BỘ LỌC THÔNG MINH CHO 5.000 KHÁCH & DANH SÁCH     -->
         <!-- ========================================================== -->
-        <section class="w-full md:w-[40%] lg:w-[38%] bg-white border-r border-neutral-200 flex flex-col shrink-0"
+        <section class="w-full md:w-[40%] lg:w-[38%] bg-white border-r border-neutral-200 flex flex-col shrink-0 overflow-x-hidden min-w-0"
                  :class="{'hidden md:flex': mobileDetailOpen, 'flex': !mobileDetailOpen}">
 
             <!-- 1. Thanh chuyển Tab nghiệp vụ chính -->
-            <div class="p-3.5 border-b border-neutral-200 space-y-3">
-                <div class="flex items-center space-x-1.5 overflow-x-auto text-xs sm:text-sm font-mono">
+            <div class="p-3 border-b border-neutral-200 space-y-2.5">
+                <div class="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
                     <button @click="switchTab('today')"
-                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'today' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
-                        Cần làm hôm nay (<span x-text="stats.today_due"></span>)
+                        Cần làm (<span x-text="stats.today_due"></span>)
                     </button>
                     <button @click="switchTab('new')"
-                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'new' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Mới (<span x-text="stats.new"></span>)
                     </button>
                     <button @click="switchTab('active')"
-                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'active' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
-                        Đang chăm sóc (<span x-text="stats.active"></span>)
+                        Đang chăm (<span x-text="stats.active"></span>)
                     </button>
                     <button @click="switchTab('won')"
-                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'won' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Đã chốt (<span x-text="stats.won"></span>)
                     </button>
                     <button @click="switchTab('all')"
-                            class="px-3 py-1.5 rounded transition whitespace-nowrap"
+                            class="px-2.5 py-1.5 rounded transition whitespace-nowrap"
                             :class="currentTab === 'all' ? 'bg-black text-white font-bold' : 'text-neutral-600 hover:bg-neutral-100'">
                         Tất cả (<span x-text="stats.total"></span>)
                     </button>
                 </div>
 
-                <!-- 2. Ô tìm kiếm đa năng + Nút Bộ lọc thông minh + Sắp xếp -->
-                <div class="flex items-center space-x-2">
-                    <div class="relative flex-1">
+                <!-- 2. Ô tìm kiếm + Nút Bộ lọc + Sắp xếp -->
+                <div class="flex items-center space-x-1.5">
+                    <div class="relative flex-1 min-w-0">
                         <input type="text" x-model="searchQuery" @input="applyLocalFilters()"
-                               placeholder="Tìm tài khoản, họ tên, ngành, ghi chú..."
-                               class="w-full text-xs sm:text-sm pl-8 pr-8 py-2 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
-                        <span class="absolute left-2.5 top-2 text-neutral-400 text-sm font-mono">⚲</span>
+                               placeholder="Tìm tài khoản, họ tên, ngành..."
+                               class="w-full text-xs sm:text-sm px-3 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-black font-sans">
                         <button x-show="searchQuery" @click="searchQuery = ''; applyLocalFilters();"
-                                class="absolute right-2.5 top-2 text-neutral-400 hover:text-black text-sm font-bold font-mono">✕</button>
+                                class="absolute right-2 top-1.5 text-neutral-400 hover:text-black text-xs font-sans">Xóa</button>
                     </div>
 
-                    <!-- Nút mở/đóng Khung Bộ lọc nâng cao -->
+                    <!-- Nút mở/đóng Khung Bộ lọc nâng cao thuần chữ -->
                     <button @click="showAdvancedFilter = !showAdvancedFilter"
-                            class="px-3 py-2 border rounded text-xs sm:text-sm font-mono transition flex items-center space-x-1.5 shrink-0"
+                            class="px-2.5 py-1.5 border rounded text-xs font-mono transition flex items-center space-x-1 shrink-0"
                             :class="showAdvancedFilter || activeFilterCount > 0 ? 'bg-black text-white border-black font-bold' : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50'">
-                        <span>Lọc</span>
-                        <span x-show="activeFilterCount > 0" class="px-1.5 py-0.2 bg-white text-black rounded text-[11px] font-bold" x-text="activeFilterCount"></span>
-                        <span x-text="showAdvancedFilter ? '▲' : '▼'" class="text-[10px]"></span>
+                        <span>Bộ lọc</span>
+                        <span x-show="activeFilterCount > 0" class="px-1 bg-white text-black rounded text-[10px] font-bold" x-text="activeFilterCount"></span>
                     </button>
 
                     <!-- Sắp xếp nhanh -->
                     <select x-model="sortBy" @change="applyLocalFilters()"
-                            class="text-xs sm:text-sm font-mono border border-neutral-300 rounded px-2.5 py-2 bg-white text-neutral-700 focus:outline-none max-w-[140px]">
+                            class="text-xs font-mono border border-neutral-300 rounded px-2 py-1.5 bg-white text-neutral-700 focus:outline-none max-w-[115px] sm:max-w-[130px]">
                         <option value="default">Ưu tiên hôm nay</option>
-                        <option value="created_desc">Mới tải lên nhất</option>
-                        <option value="score_desc">Điểm AI cao nhất</option>
-                        <option value="followers_desc">Nhiều flw nhất</option>
-                        <option value="reels_desc">Nhiều Reels nhất</option>
+                        <option value="created_desc">Mới tải lên</option>
+                        <option value="score_desc">Điểm AI cao</option>
+                        <option value="followers_desc">Nhiều flw</option>
+                        <option value="reels_desc">Nhiều Reels</option>
                         <option value="updated_desc">Mới cập nhật</option>
                     </select>
                 </div>
 
                 <!-- 3. KHUNG BỘ LỌC ĐA TẦNG CHO BÀI TOÁN 5.000 KHÁCH (MỞ RỘNG / THU GỌN) -->
                 <div x-show="showAdvancedFilter" x-cloak
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0 -translate-y-2"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     class="p-3.5 bg-neutral-50 border border-neutral-200 rounded space-y-3 text-xs sm:text-sm font-mono shadow-inner">
+                     x-transition
+                     class="p-3 bg-neutral-50 border border-neutral-200 rounded space-y-2.5 text-xs font-mono">
                     
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <!-- Tiêu chí 1: ĐỢT TẢI LÊN (BATCH) - GIẢI QUYẾT BÀI TOÁN TẬP KHÁCH MỚI -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Tiêu chí 1: ĐỢT TẢI LÊN (BATCH) -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                📅 Đợt tải lên (Mẻ khách)
-                            </label>
-                            <select x-model="batchFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Đợt tải lên</label>
+                            <select x-model="batchFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Tất cả các đợt</option>
-                                <option value="today">🔥 Đợt mới hôm nay</option>
+                                <option value="today">Đợt mới hôm nay</option>
                                 <option value="last_3d">3 ngày qua</option>
                                 <option value="last_7d">7 ngày qua</option>
                                 <option value="last_30d">30 ngày qua</option>
@@ -170,66 +157,56 @@
                             </select>
                         </div>
 
-                        <!-- Tiêu chí 2: TÌNH TRẠNG PHÂN BỔ (AI ĐANG PHỤ TRÁCH) -->
+                        <!-- Tiêu chí 2: TÌNH TRẠNG PHÂN BỔ -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                👤 Người phụ trách
-                            </label>
-                            <select x-model="assignmentFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Người phụ trách</label>
+                            <select x-model="assignmentFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Tất cả khách hàng</option>
-                                <option value="unassigned">Chưa ai nhận (Mới tinh)</option>
+                                <option value="unassigned">Chưa ai nhận</option>
                                 <option value="assigned">Đã có người phụ trách</option>
                             </select>
                         </div>
 
                         <!-- Tiêu chí 3: Mức điểm đánh giá AI -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                ⭐ Mức điểm AI
-                            </label>
-                            <select x-model="scoreFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Mức điểm AI</label>
+                            <select x-model="scoreFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi mức điểm</option>
-                                <option value="vip">≥ 80 điểm (Khách VIP)</option>
-                                <option value="qualified">65 – 79 điểm (Đạt chuẩn)</option>
-                                <option value="medium">50 – 64 điểm (Trung bình)</option>
-                                <option value="low">&lt; 50 điểm (Thấp)</option>
+                                <option value="vip">Từ 80 điểm trở lên</option>
+                                <option value="qualified">65 đến 79 điểm</option>
+                                <option value="medium">50 đến 64 điểm</option>
+                                <option value="low">Dưới 50 điểm</option>
                             </select>
                         </div>
 
-                        <!-- Tiêu chí 4: Quy mô người theo dõi (Followers) -->
+                        <!-- Tiêu chí 4: Quy mô người theo dõi -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                👥 Người theo dõi
-                            </label>
-                            <select x-model="followersFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Người theo dõi</label>
+                            <select x-model="followersFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi quy mô</option>
-                                <option value="micro">&lt; 5.000 flw (Micro)</option>
-                                <option value="growth">5.000 – 25.000 flw (Tăng trưởng)</option>
-                                <option value="medium">25.000 – 100.000 flw (Ngân sách tốt)</option>
-                                <option value="high">&gt; 100.000 flw (Kênh lớn)</option>
+                                <option value="micro">Dưới 5.000</option>
+                                <option value="growth">5.000 đến 25.000</option>
+                                <option value="medium">25.000 đến 100.000</option>
+                                <option value="high">Trên 100.000</option>
                                 <option value="custom">Tùy chọn số lượng...</option>
                             </select>
                         </div>
 
                         <!-- Tiêu chí 5: Số lượng Reels 30 ngày -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                🎬 Reels / 30 ngày
-                            </label>
-                            <select x-model="reelsFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Reels trong 30 ngày</label>
+                            <select x-model="reelsFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Mọi tần suất</option>
-                                <option value="high">≥ 12 reels (Rất tích cực)</option>
-                                <option value="medium">6 – 11 reels (Đều đặn)</option>
-                                <option value="low">&lt; 6 reels (Quá tải tự dựng)</option>
+                                <option value="high">Từ 12 reels trở lên</option>
+                                <option value="medium">6 đến 11 reels</option>
+                                <option value="low">Dưới 6 reels</option>
                             </select>
                         </div>
 
                         <!-- Tiêu chí 6: Lĩnh vực / Ngành nghề -->
                         <div>
-                            <label class="block text-xs uppercase font-bold text-neutral-700 mb-1">
-                                🏷️ Ngành nghề / Niche
-                            </label>
-                            <select x-model="industryFilter" @change="applyLocalFilters()" class="w-full text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white">
+                            <label class="block text-[11px] font-bold text-neutral-700 mb-1">Ngành nghề</label>
+                            <select x-model="industryFilter" @change="applyLocalFilters()" class="w-full text-xs p-1.5 border border-neutral-300 rounded bg-white">
                                 <option value="all">Tất cả ngành nghề</option>
                                 <template x-for="ind in availableIndustries" :key="ind">
                                     <option :value="ind" x-text="ind"></option>
@@ -240,18 +217,18 @@
 
                     <!-- Ô nhập Followers tùy chọn khi chọn 'custom' -->
                     <div x-show="followersFilter === 'custom'" class="flex items-center space-x-2 pt-1">
-                        <input type="number" x-model.number="customMinFollowers" @input="applyLocalFilters()" placeholder="Flw tối thiểu (Min)" class="flex-1 text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white font-mono">
+                        <input type="number" x-model.number="customMinFollowers" @input="applyLocalFilters()" placeholder="Tối thiểu" class="flex-1 text-xs p-1.5 border border-neutral-300 rounded bg-white font-mono">
                         <span class="text-neutral-400">-</span>
-                        <input type="number" x-model.number="customMaxFollowers" @input="applyLocalFilters()" placeholder="Flw tối đa (Max)" class="flex-1 text-xs sm:text-sm p-1.5 border border-neutral-300 rounded bg-white font-mono">
+                        <input type="number" x-model.number="customMaxFollowers" @input="applyLocalFilters()" placeholder="Tối đa" class="flex-1 text-xs p-1.5 border border-neutral-300 rounded bg-white font-mono">
                     </div>
 
-                    <!-- Nút xóa bộ lọc -->
-                    <div class="flex items-center justify-between pt-2 border-t border-neutral-200 text-xs sm:text-sm">
+                    <!-- Nút xóa bộ lọc thuần chữ -->
+                    <div class="flex items-center justify-between pt-2 border-t border-neutral-200 text-xs">
                         <span class="text-neutral-500 font-sans">
-                            Tìm thấy: <b class="text-black font-mono text-sm" x-text="filteredLeads.length"></b> / <span x-text="leads.length"></span> khách
+                            Tìm thấy: <b class="text-black font-mono" x-text="filteredLeads.length"></b> / <span x-text="leads.length"></span> khách
                         </span>
                         <button type="button" @click="resetFilters()" class="text-rose-600 hover:text-rose-800 font-bold transition">
-                            Xóa toàn bộ bộ lọc ✕
+                            Xóa toàn bộ bộ lọc
                         </button>
                     </div>
                 </div>
@@ -259,11 +236,11 @@
                 <!-- 4. Thanh đếm kết quả nhỏ -->
                 <div class="flex items-center justify-between text-xs font-mono text-neutral-500 pt-0.5">
                     <div>
-                        Hiển thị: <b class="text-neutral-900 text-sm" x-text="filteredLeads.length"></b> khách
-                        <span x-show="activeFilterCount > 0" class="text-neutral-400 font-sans">(Đang áp dụng <span x-text="activeFilterCount"></span> tiêu chí lọc)</span>
+                        Hiển thị: <b class="text-neutral-900" x-text="filteredLeads.length"></b> khách
+                        <span x-show="activeFilterCount > 0" class="text-neutral-400 font-sans">(Đang lọc: <span x-text="activeFilterCount"></span>)</span>
                     </div>
-                    <button x-show="activeFilterCount > 0" @click="resetFilters()" class="text-xs text-neutral-500 hover:text-black font-sans font-bold">
-                        Xóa lọc ✕
+                    <button x-show="activeFilterCount > 0" @click="resetFilters()" class="text-xs text-neutral-500 hover:text-black font-sans font-medium">
+                        Xóa lọc
                     </button>
                 </div>
             </div>
@@ -271,35 +248,35 @@
             <!-- 5. Danh sách thẻ khách hàng cuộn dọc -->
             <div class="flex-1 overflow-y-auto divide-y divide-neutral-100 select-text">
                 <template x-if="isLoading && leads.length === 0">
-                    <div class="p-8 text-center text-neutral-400 text-sm">
-                        <span class="inline-block animate-spin mr-1.5">↻</span> Đang tải danh sách khách hàng từ máy chủ...
+                    <div class="p-8 text-center text-neutral-400 text-xs">
+                        Đang tải danh sách khách hàng từ máy chủ...
                     </div>
                 </template>
 
                 <template x-if="!isLoading && filteredLeads.length === 0">
-                    <div class="p-8 text-center text-neutral-400 text-sm space-y-1">
+                    <div class="p-8 text-center text-neutral-400 text-xs space-y-1">
                         <p class="font-bold text-neutral-700">Không có khách hàng nào phù hợp</p>
-                        <p class="text-xs text-neutral-500">Hãy kiểm tra lại bộ lọc hoặc đẩy thêm mẻ khách mới từ phần mềm Instool.</p>
+                        <p class="text-[11px] text-neutral-500">Hãy kiểm tra lại bộ lọc hoặc đẩy thêm mẻ khách mới từ phần mềm Instool.</p>
                     </div>
                 </template>
 
                 <template x-for="lead in filteredLeads" :key="lead.id || lead.username">
                     <div @click="selectLead(lead)"
-                         class="p-4 hover:bg-neutral-50 transition cursor-pointer flex items-start space-x-3.5"
+                         class="p-3.5 hover:bg-neutral-50 transition cursor-pointer flex items-start space-x-3"
                          :class="selectedLead && selectedLead.username === lead.username ? 'bg-neutral-50 border-l-4 border-black' : ''">
                         
-                        <!-- Avatar chữ cái -->
-                        <div class="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase font-mono shadow-2xs">
+                        <!-- Avatar chữ cái đại diện tối giản -->
+                        <div class="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shrink-0 uppercase font-mono">
                             <span x-text="lead.username.charAt(0)"></span>
                         </div>
 
                         <!-- Thông tin tóm tắt -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-mono font-bold text-sm text-neutral-900 truncate">@<span x-text="lead.username"></span></span>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="font-mono font-bold text-xs sm:text-sm text-neutral-900 truncate">@<span x-text="lead.username"></span></span>
                                 
                                 <!-- Điểm đánh giá AI -->
-                                <span class="font-mono text-xs font-bold px-2 py-0.5 rounded border shrink-0"
+                                <span class="font-mono text-xs font-bold px-1.5 py-0.2 rounded border shrink-0"
                                       :class="{
                                           'bg-emerald-50 text-emerald-800 border-emerald-300': (lead.fit_score || 0) >= 80,
                                           'bg-blue-50 text-blue-800 border-blue-200': (lead.fit_score || 0) >= 65 && (lead.fit_score || 0) < 80,
@@ -309,7 +286,7 @@
                                 </span>
                             </div>
 
-                            <div class="text-xs text-neutral-600 truncate mb-1.5 font-medium">
+                            <div class="text-xs text-neutral-600 truncate mb-1">
                                 <span x-text="lead.full_name || lead.detected_industry || 'Chưa cập nhật họ tên'"></span>
                             </div>
 
@@ -336,71 +313,65 @@
 
 
         <!-- ============================================================= -->
-        <!-- CỘT PHẢI (62%): CHI TIẾT KHÁCH HÀNG & BÀN LÀM VIỆC TIẾP CẬN -->
+        <!-- CỘT PHẢI: CHI TIẾT KHÁCH HÀNG & BÀN LÀM VIỆC TIẾP CẬN        -->
+        <!-- TỐI ƯU CHỐNG TRÀN NGANG 100% TRÊN ĐIỆN THOẠI (BREAK-ALL)      -->
         <!-- ============================================================= -->
-        <section class="flex-1 bg-neutral-50 flex flex-col overflow-y-auto select-text"
+        <section class="flex-1 bg-neutral-50 flex flex-col overflow-y-auto overflow-x-hidden select-text w-full max-w-full min-w-0"
                  :class="{'flex': mobileDetailOpen, 'hidden md:flex': !mobileDetailOpen}">
 
             <template x-if="!selectedLead">
-                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-neutral-400 text-sm">
-                    <div class="w-14 h-14 rounded-full border border-neutral-300 flex items-center justify-center text-2xl mb-3 text-neutral-500">
-                        ☞
-                    </div>
-                    <p class="font-bold text-neutral-800 text-base uppercase tracking-wide">Chọn một khách hàng để bắt đầu</p>
+                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-neutral-400 text-xs sm:text-sm">
+                    <p class="font-bold text-neutral-800 text-sm sm:text-base uppercase tracking-wide">Chọn một khách hàng để bắt đầu</p>
                     <p class="text-xs text-neutral-500 max-w-sm mt-1.5 leading-relaxed">
-                        Xem chi tiết đánh giá AI, điểm đau trong video, kịch bản tin nhắn cá nhân hóa và nút 1 chạm mở Instagram chat.
+                        Xem chi tiết đánh giá AI, điểm lưu ý trong video, kịch bản tin nhắn cá nhân hóa và nút mở Instagram chat.
                     </p>
                 </div>
             </template>
 
             <template x-if="selectedLead">
-                <div class="p-5 md:p-7 space-y-5 max-w-4xl mx-auto w-full">
+                <div class="p-3.5 sm:p-5 md:p-6 space-y-4 max-w-4xl mx-auto w-full max-w-full overflow-hidden">
 
-                    <!-- Nút quay lại trên Mobile -->
-                    <div class="md:hidden pb-2.5 border-b border-neutral-200">
-                        <button @click="mobileDetailOpen = false" class="text-xs font-mono font-bold text-neutral-700 flex items-center space-x-1">
-                            <span>&larr;</span> <span>Quay lại danh sách khách hàng</span>
+                    <!-- Nút quay lại trên Mobile thuần chữ tối giản -->
+                    <div class="md:hidden pb-2 border-b border-neutral-200">
+                        <button @click="mobileDetailOpen = false" class="text-xs font-mono font-bold text-neutral-800 py-1 px-2 border border-neutral-300 rounded bg-white">
+                            Quay lại danh sách
                         </button>
                     </div>
 
-                    <!-- 1. HỒ SƠ TỔNG QUAN KHÁCH HÀNG -->
-                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center space-x-2.5">
-                                <h2 class="text-lg font-bold font-mono text-neutral-900">@<span x-text="selectedLead.username"></span></h2>
+                    <!-- 1. HỒ SƠ TỔNG QUAN KHÁCH HÀNG (CHỐNG TRÀN CHỮ) -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-2xs flex flex-col sm:flex-row sm:items-start justify-between gap-3 w-full max-w-full overflow-hidden">
+                        <div class="space-y-1.5 min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2 class="text-base sm:text-lg font-bold font-mono text-neutral-900 break-all">@<span x-text="selectedLead.username"></span></h2>
                                 <a :href="'https://instagram.com/' + selectedLead.username" target="_blank"
-                                   class="px-2.5 py-1 border border-neutral-300 hover:border-black rounded text-xs font-mono text-neutral-700 hover:text-black transition inline-flex items-center space-x-1 shadow-2xs">
-                                    <span>Xem trang cá nhân</span>
-                                    <span>↗</span>
+                                   class="px-2.5 py-0.5 border border-neutral-300 hover:border-black rounded text-xs font-mono text-neutral-700 hover:text-black transition inline-block">
+                                    Xem trang cá nhân
                                 </a>
                             </div>
-                            <div class="text-sm text-neutral-800 font-semibold" x-text="selectedLead.full_name || 'Chưa cập nhật họ tên'"></div>
-                            <div class="text-xs text-neutral-600 leading-relaxed max-w-xl" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
+                            <div class="text-xs sm:text-sm text-neutral-800 font-semibold break-words" x-text="selectedLead.full_name || 'Chưa cập nhật họ tên'"></div>
+                            <div class="text-xs text-neutral-600 leading-relaxed break-words break-all" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
                         </div>
 
                         <!-- Các chỉ số chính -->
-                        <div class="flex sm:flex-col items-end gap-1.5 text-xs sm:text-sm font-mono shrink-0">
+                        <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1 text-xs font-mono shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-neutral-100">
                             <div class="text-neutral-800">
                                 <b><span x-text="formatNumber(selectedLead.followers)"></span></b> Người theo dõi
                             </div>
-                            <div class="text-neutral-600 text-xs">
-                                <b><span x-text="selectedLead.reels_last_30d || 0"></span></b> Reels trong 30 ngày
+                            <div class="text-neutral-600">
+                                <b><span x-text="selectedLead.reels_last_30d || 0"></span></b> Reels / 30 ngày
                             </div>
-                            <div class="text-[11px] text-neutral-400 font-sans" x-text="selectedLead.detected_industry || selectedLead.category_name || 'Chưa phân loại ngành'"></div>
+                            <div class="text-neutral-400 font-sans break-all" x-text="selectedLead.detected_industry || selectedLead.category_name || 'Chưa phân loại'"></div>
                         </div>
                     </div>
 
 
-                    <!-- 2. ĐÁNH GIÁ NHU CẦU TỪ AI (GỒM 4 THANH TIÊU CHÍ & ĐIỂM LƯU Ý BẮT CHUYỆN) -->
-                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                                <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Đánh giá Nhu cầu từ AI</h3>
-                            </div>
-                            <div class="font-mono text-xs sm:text-sm font-bold flex items-center space-x-2">
-                                <span class="text-neutral-500 text-xs font-sans">Tổng điểm:</span>
-                                <span class="px-2.5 py-1 rounded text-sm border font-extrabold"
+                    <!-- 2. ĐÁNH GIÁ NHU CẦU TỪ AI (GỒM 4 THANH TIÊU CHÍ & ĐIỂM LƯU Ý) -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-2xs space-y-3.5 w-full max-w-full overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
+                            <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-900">Đánh giá Nhu cầu từ AI</h3>
+                            <div class="font-mono text-xs sm:text-sm font-bold flex items-center space-x-1.5">
+                                <span class="text-neutral-500 font-sans">Tổng điểm:</span>
+                                <span class="px-2 py-0.5 rounded text-xs sm:text-sm border font-extrabold"
                                       :class="{
                                           'bg-emerald-50 text-emerald-800 border-emerald-300': (selectedLead.fit_score || 0) >= 80,
                                           'bg-blue-50 text-blue-800 border-blue-200': (selectedLead.fit_score || 0) >= 65 && (selectedLead.fit_score || 0) < 80,
@@ -412,24 +383,24 @@
                         </div>
 
                         <!-- 4 Thanh tiến trình tiêu chí thành phần (Thang điểm 100) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-mono">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
                             <div>
                                 <div class="flex justify-between mb-1 text-neutral-600">
                                     <span>1. Cam kết làm video:</span>
                                     <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-2">
-                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.video_volume || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.video_volume || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex justify-between mb-1 text-neutral-600">
-                                    <span>2. Nhu cầu tối ưu giữ chân &amp; Hook:</span>
+                                    <span>2. Giữ chân &amp; Hook:</span>
                                     <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-2">
-                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.engagement_gap || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.engagement_gap || 0)) + '%'"></div>
                                 </div>
                             </div>
 
@@ -438,41 +409,38 @@
                                     <span>3. Khả năng chi trả:</span>
                                     <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.monetization || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-2">
-                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.monetization || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.monetization || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex justify-between mb-1 text-neutral-600">
-                                    <span>4. Dấu hiệu thiếu thời gian tự dựng:</span>
+                                    <span>4. Thiếu thời gian tự dựng:</span>
                                     <span class="font-bold text-neutral-800" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0) + '/100'"></span>
                                 </div>
-                                <div class="w-full bg-neutral-200 rounded-full h-2">
-                                    <div class="bg-black h-2 rounded-full transition-all duration-300" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0)) + '%'"></div>
+                                <div class="w-full bg-neutral-200 rounded-full h-1.5">
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0)) + '%'"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Khung Điểm Lưu Ý Khi Trò Chuyện (Đọc trong 3 giây) -->
-                        <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-2.5">
+                        <!-- Khung Điểm Lưu Ý Khi Trò Chuyện (Định dạng ngắn gọn, chống tràn chữ URL) -->
+                        <div class="bg-neutral-50 border border-neutral-200 rounded p-3 sm:p-3.5 space-y-2 w-full max-w-full overflow-hidden">
                             <div class="flex items-center justify-between">
                                 <span class="font-bold text-xs uppercase tracking-wider text-neutral-800 font-mono">
-                                    Điểm lưu ý khi bắt chuyện (Gợi ý từ AI):
+                                    Điểm lưu ý khi bắt chuyện:
                                 </span>
                                 <span class="text-xs text-neutral-400 font-mono">Đọc trong 3 giây</span>
                             </div>
 
-                            <div class="space-y-2.5">
+                            <div class="space-y-2 w-full max-w-full overflow-hidden">
                                 <template x-for="(point, idx) in (selectedLead.ai_evidence_parsed || [])" :key="idx">
-                                    <div class="p-3 bg-white rounded border border-neutral-200/90 shadow-2xs space-y-1.5">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="w-2 h-2 rounded-full bg-black"></span>
-                                            <span class="font-bold text-xs text-neutral-900" x-text="getEvidenceTitle(point)"></span>
-                                        </div>
-                                        <p class="text-neutral-700 text-xs sm:text-sm leading-relaxed" x-text="getEvidenceText(point)"></p>
+                                    <div class="p-2.5 sm:p-3 bg-white rounded border border-neutral-200/90 shadow-2xs space-y-1 w-full max-w-full overflow-hidden">
+                                        <div class="font-bold text-xs text-neutral-900" x-text="getEvidenceTitle(point)"></div>
+                                        <p class="text-neutral-700 text-xs sm:text-sm leading-relaxed break-words" x-text="getEvidenceText(point)"></p>
                                         <template x-if="point && point.excerpt">
-                                            <p class="text-xs text-neutral-500 bg-neutral-50 px-2.5 py-1.5 rounded border border-neutral-100 font-mono">
+                                            <p class="text-xs text-neutral-500 bg-neutral-50 px-2.5 py-1.5 rounded border border-neutral-100 font-mono break-all leading-normal">
                                                 <span class="font-bold text-neutral-700">Dẫn chứng:</span> "<span x-text="point.excerpt"></span>"
                                             </p>
                                         </template>
@@ -490,30 +458,28 @@
 
 
                     <!-- 3. KỊCH BẢN TIN NHẮN CHÀO HỎI GỢI Ý & TIẾP CẬN NHANH -->
-                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
-                            <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Kịch Bản Tin Nhắn Chào Hỏi Gợi Ý</h3>
-                            <span class="text-xs font-mono text-neutral-400">AI tạo sẵn riêng cho khách này</span>
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-2xs space-y-3 w-full max-w-full overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-900">Kịch Bản Tin Nhắn Chào Hỏi Gợi Ý</h3>
+                            <span class="text-xs font-mono text-neutral-400">AI tạo sẵn theo ngách</span>
                         </div>
 
                         <!-- Khung soạn tin nhắn -->
                         <div>
                             <textarea x-model="selectedLead.suggested_dm" rows="4"
                                       placeholder="Nội dung tin nhắn chào hỏi gửi khách hàng..."
-                                      class="w-full text-xs sm:text-sm font-sans p-3.5 border border-neutral-300 rounded focus:outline-none focus:border-black leading-relaxed"></textarea>
+                                      class="w-full text-xs sm:text-sm font-sans p-3 border border-neutral-300 rounded focus:outline-none focus:border-black leading-relaxed box-border"></textarea>
                         </div>
 
-                        <!-- Các nút tiếp cận 1 chạm -->
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <!-- Các nút tiếp cận thuần chữ -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
                             <button @click="copyDmAndOpenChat(selectedLead)"
-                                    class="flex-1 py-3 px-5 bg-black hover:bg-neutral-800 text-white rounded text-sm font-bold transition flex items-center justify-center space-x-2 shadow-sm">
-                                <span>⚡</span>
+                                    class="flex-1 py-2.5 px-4 bg-black hover:bg-neutral-800 text-white rounded text-xs sm:text-sm font-bold transition text-center shadow-2xs">
                                 <span>Sao chép tin nhắn &amp; Mở hộp thư Instagram</span>
-                                <span class="text-neutral-400 font-mono text-xs">(ig.me/m/...)</span>
                             </button>
 
                             <button @click="copyOnlyDm(selectedLead.suggested_dm)"
-                                    class="py-3 px-4 border border-neutral-300 hover:border-black rounded text-xs sm:text-sm font-semibold bg-white text-neutral-700 transition shadow-2xs">
+                                    class="py-2.5 px-3 border border-neutral-300 hover:border-black rounded text-xs sm:text-sm font-medium bg-white text-neutral-700 transition text-center shadow-2xs">
                                 Chỉ sao chép tin nhắn
                             </button>
                         </div>
@@ -523,44 +489,44 @@
                     </div>
 
 
-                    <!-- 4. TIẾN ĐỘ CHĂM SÓC KHÁCH HÀNG -->
-                    <div class="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2.5">
-                            <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-900">Tiến Độ Chăm Sóc Khách Hàng</h3>
-                            <span class="text-xs font-mono text-neutral-400" x-text="'Cập nhật lúc: ' + (selectedLead.updated_at || 'Mới')"></span>
+                    <!-- 4. TIẾN ĐỘ CHĂM SÓC KHÁCH HÀNG (TRÌNH BÀY GỌN GÀNG TRÊN MOBILE) -->
+                    <div class="bg-white border border-neutral-200 rounded p-4 shadow-2xs space-y-3.5 w-full max-w-full overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-900">Tiến Độ Chăm Sóc Khách Hàng</h3>
+                            <span class="text-xs font-mono text-neutral-400" x-text="'Cập nhật: ' + (selectedLead.updated_at || 'Mới')"></span>
                         </div>
 
-                        <!-- Trạng thái chăm sóc -->
+                        <!-- Trạng thái chăm sóc (Grid 3 cột trên Mobile, 6 cột trên Desktop) -->
                         <div class="space-y-1.5">
                             <label class="block text-xs font-semibold text-neutral-700">Trạng thái chăm sóc:</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs sm:text-sm font-mono">
+                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs font-mono">
                                 <button type="button" @click="selectedLead.sale_status = 'New'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'New' ? 'bg-black text-white border-black' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Mới
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Contacted'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Contacted' ? 'bg-blue-600 text-white border-blue-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Đã gửi tin
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'In_Discussion'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'In_Discussion' ? 'bg-amber-600 text-white border-amber-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Đang trao đổi
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Demo_Sent'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Demo_Sent' ? 'bg-purple-600 text-white border-purple-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
-                                    Đã gửi video mẫu
+                                    Gửi mẫu
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Won'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Won' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
-                                    Chốt đơn ★
+                                    Chốt đơn
                                 </button>
                                 <button type="button" @click="selectedLead.sale_status = 'Lost'"
-                                        class="py-2 px-2.5 rounded border text-center transition font-bold"
+                                        class="py-1.5 px-1 rounded border text-center transition font-bold"
                                         :class="selectedLead.sale_status === 'Lost' ? 'bg-rose-600 text-white border-rose-600' : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'">
                                     Từ chối
                                 </button>
@@ -568,34 +534,33 @@
                         </div>
 
                         <!-- Lịch hẹn & Người phụ trách -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs sm:text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
                             <div>
                                 <label class="block font-semibold text-neutral-700 mb-1">Lịch hẹn liên hệ lại:</label>
                                 <input type="datetime-local" x-model="selectedLead.follow_up_at"
-                                       class="w-full border border-neutral-300 rounded px-3.5 py-2 font-mono focus:outline-none focus:border-black">
+                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-mono focus:outline-none focus:border-black box-border">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-neutral-700 mb-1">Người phụ trách:</label>
                                 <input type="text" x-model="selectedLead.sale_assigned_to" placeholder="Ví dụ: Hoàng Nam"
-                                       class="w-full border border-neutral-300 rounded px-3.5 py-2 font-sans focus:outline-none focus:border-black">
+                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-sans focus:outline-none focus:border-black box-border">
                             </div>
                         </div>
 
                         <!-- Ghi chú chăm sóc -->
                         <div class="space-y-1.5">
-                            <label class="block text-xs font-semibold text-neutral-700">Ghi chú trao đổi (Nhu cầu, phản hồi của khách, hẹn báo giá):</label>
+                            <label class="block text-xs font-semibold text-neutral-700">Ghi chú trao đổi:</label>
                             <textarea x-model="selectedLead.sale_note" rows="2"
-                                      placeholder="Ghi chú nhanh: Khách hẹn thứ 6 gửi video gốc, thích phong cách cắt nhịp nhanh..."
-                                      class="w-full text-xs sm:text-sm font-sans p-3 border border-neutral-300 rounded focus:outline-none focus:border-black"></textarea>
+                                      placeholder="Ghi chú nhanh: Khách hẹn thứ 6 gửi video gốc, thích nhịp dựng nhanh..."
+                                      class="w-full text-xs sm:text-sm font-sans p-2.5 border border-neutral-300 rounded focus:outline-none focus:border-black box-border"></textarea>
                         </div>
 
-                        <!-- Nút lưu tiến độ -->
-                        <div class="flex justify-end pt-2">
+                        <!-- Nút lưu tiến độ thuần chữ -->
+                        <div class="flex justify-end pt-1">
                             <button @click="saveLeadProgress(selectedLead)" :disabled="isSaving"
-                                    class="py-2.5 px-6 bg-black hover:bg-neutral-800 text-white rounded text-sm font-bold transition shadow-sm disabled:opacity-50 flex items-center space-x-2">
-                                <span x-show="isSaving" class="inline-block animate-spin mr-1">↻</span>
-                                <span x-text="isSaving ? 'Đang lưu lên máy chủ...' : 'Lưu tiến độ chăm sóc'"></span>
+                                    class="w-full sm:w-auto py-2.5 px-6 bg-black hover:bg-neutral-800 text-white rounded text-xs sm:text-sm font-bold transition shadow-2xs disabled:opacity-50 text-center">
+                                <span x-text="isSaving ? 'Đang lưu...' : 'Lưu tiến độ chăm sóc'"></span>
                             </button>
                         </div>
                     </div>
@@ -678,8 +643,8 @@
                         'New': 'Mới',
                         'Contacted': 'Đã gửi tin',
                         'In_Discussion': 'Đang trao đổi',
-                        'Demo_Sent': 'Đã gửi video mẫu',
-                        'Won': 'Chốt đơn ★',
+                        'Demo_Sent': 'Gửi mẫu',
+                        'Won': 'Chốt đơn',
                         'Lost': 'Từ chối'
                     };
                     return map[st] || st || 'Mới';
@@ -920,7 +885,7 @@
                     // 4. Lưu lên máy chủ D1
                     await this.saveLeadProgress(lead, false);
 
-                    this.showToast(`Đã sao chép tin nhắn & mở hộp thư @${lead.username}!`, 'success', 5000);
+                    this.showToast(`Đã sao chép tin nhắn và mở hộp thư @${lead.username}!`, 'success', 5000);
                 },
 
                 async copyOnlyDm(text) {
