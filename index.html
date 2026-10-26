@@ -283,40 +283,40 @@
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
                                     <span>1. Cam kết làm Video:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 20) + '/25đ'"></span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.video_volume || 0) + '/100'"></span>
                                 </div>
                                 <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.video_volume || 20)/25*100) + '%'"></div>
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.video_volume || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
                                     <span>2. Lỗ hổng Retention & Hook:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 22) + '/30đ'"></span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.engagement_gap || 0) + '/100'"></span>
                                 </div>
                                 <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.engagement_gap || 22)/30*100) + '%'"></div>
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.engagement_gap || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
                                     <span>3. Khả năng chi trả:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.monetization || 18) + '/25đ'"></span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.monetization || 0) + '/100'"></span>
                                 </div>
                                 <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.monetization || 18)/25*100) + '%'"></div>
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.monetization || 0)) + '%'"></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1 text-neutral-600">
                                     <span>4. Nghẽn thời gian:</span>
-                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 15) + '/20đ'"></span>
+                                    <span class="font-bold" x-text="(selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0) + '/100'"></span>
                                 </div>
                                 <div class="w-full bg-neutral-200 rounded-full h-1.5">
-                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + ((selectedLead.score_breakdown_parsed?.capacity_bottleneck || 15)/20*100) + '%'"></div>
+                                    <div class="bg-black h-1.5 rounded-full" :style="'width: ' + Math.min(100, (selectedLead.score_breakdown_parsed?.capacity_bottleneck || 0)) + '%'"></div>
                                 </div>
                             </div>
                         </div>
@@ -326,7 +326,7 @@
                             <span class="font-bold text-[11px] uppercase tracking-wider text-neutral-700 block font-mono">Bằng chứng & Điểm đau AI phát hiện (Dùng để bắt chuyện):</span>
                             <ul class="list-disc list-inside space-y-1 text-neutral-700 leading-relaxed">
                                 <template x-for="(point, idx) in (selectedLead.ai_evidence_parsed || [])" :key="idx">
-                                    <li x-text="point"></li>
+                                    <li x-text="formatEvidence(point)"></li>
                                 </template>
                                 <template x-if="!selectedLead.ai_evidence_parsed || selectedLead.ai_evidence_parsed.length === 0">
                                     <li class="text-neutral-400 italic">Kênh có tiềm năng tăng trưởng, cần đề xuất dựng thử 1 video mẫu để tối ưu visual hook và âm thanh.</li>
@@ -481,6 +481,17 @@
                 formatNumber(num) {
                     if (!num) return '0';
                     return Number(num).toLocaleString('vi-VN');
+                },
+
+                formatEvidence(point) {
+                    if (!point) return '';
+                    if (typeof point === 'string') return point;
+                    if (typeof point === 'object') {
+                        const reasoning = point.reasoning || point.detail || point.point || '';
+                        const excerpt = point.excerpt ? ` (Trích dẫn: "${point.excerpt}")` : '';
+                        return (reasoning + excerpt) || JSON.stringify(point);
+                    }
+                    return String(point);
                 },
 
                 getSaleStatusLabel(st) {
