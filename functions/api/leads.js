@@ -182,7 +182,7 @@ export async function onRequestPost(context) {
       }
     }
 
-    const { id, username, sale_status, sale_tag, sale_note, sale_assigned_to, follow_up_at, contacted_at } = body;
+    const { id, username, full_name, sale_status, sale_tag, sale_note, sale_assigned_to, follow_up_at, contacted_at } = body;
 
     if (!id && !username) {
       return Response.json({ success: false, error: "Thiếu thông tin nhận diện ID hoặc Username của khách." }, { status: 400 });
@@ -191,6 +191,10 @@ export async function onRequestPost(context) {
     let updateFields = [];
     let params = [];
 
+    if (full_name !== undefined) {
+      updateFields.push("full_name = ?");
+      params.push(full_name);
+    }
     if (sale_status !== undefined) {
       updateFields.push("sale_status = ?");
       params.push(sale_status);

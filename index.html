@@ -361,7 +361,36 @@
                                     Xem trang cá nhân
                                 </a>
                             </div>
-                            <div class="text-xs sm:text-sm text-neutral-800 font-semibold break-words" x-text="selectedLead.full_name || 'Chưa cập nhật họ tên'"></div>
+                            <!-- Họ tên khách hàng & Nút đổi tên -->
+                            <div class="py-0.5">
+                                <template x-if="!isEditingName">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs sm:text-sm text-neutral-900 font-bold break-words"
+                                              x-text="selectedLead.full_name && selectedLead.full_name.trim() ? selectedLead.full_name : 'Chưa cập nhật họ tên'"></span>
+                                        <button type="button" @click="startEditName()"
+                                                class="text-[11px] font-mono text-neutral-600 hover:text-black border border-neutral-300 hover:border-black px-1.5 py-0.5 rounded bg-neutral-50 hover:bg-neutral-100 transition shrink-0">
+                                            Đổi tên
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="isEditingName">
+                                    <div class="flex items-center space-x-1.5 w-full max-w-sm">
+                                        <input type="text" id="customerNameInput" x-model="editingNameValue"
+                                               @keydown.enter.prevent="saveCustomerName()"
+                                               @keydown.escape="isEditingName = false"
+                                               placeholder="Nhập họ tên khách..."
+                                               class="flex-1 text-xs sm:text-sm px-2.5 py-1 border border-black rounded focus:outline-none bg-white font-sans">
+                                        <button type="button" @click="saveCustomerName()" :disabled="isSavingName"
+                                                class="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded text-xs font-bold shrink-0 transition">
+                                            <span x-text="isSavingName ? '...' : 'Lưu'"></span>
+                                        </button>
+                                        <button type="button" @click="isEditingName = false"
+                                                class="px-2 py-1 border border-neutral-300 text-neutral-600 rounded text-xs hover:bg-neutral-100 shrink-0 transition">
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
                             <div class="text-xs text-neutral-600 leading-relaxed break-words break-all" x-text="selectedLead.bio || 'Không có tiểu sử'"></div>
                         </div>
 
@@ -546,8 +575,14 @@
                             </div>
                         </div>
 
-                        <!-- Lịch hẹn & Người phụ trách -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                        <!-- Họ tên khách, Lịch hẹn & Người phụ trách -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
+                            <div>
+                                <label class="block font-semibold text-neutral-700 mb-1">Họ tên khách hàng:</label>
+                                <input type="text" x-model="selectedLead.full_name" placeholder="Ví dụ: Anh Quân"
+                                       class="w-full border border-neutral-300 rounded px-3 py-1.5 font-sans focus:outline-none focus:border-black box-border">
+                            </div>
+
                             <div>
                                 <label class="block font-semibold text-neutral-700 mb-1">Lịch hẹn liên hệ lại:</label>
                                 <input type="datetime-local" x-model="selectedLead.follow_up_at"
@@ -607,6 +642,9 @@
                 stats: { today_due: 0, new: 0, active: 0, won: 0, total: 0 },
                 isLoading: false,
                 isSaving: false,
+                isEditingName: false,
+                editingNameValue: '',
+                isSavingName: false,
                 mobileDetailOpen: false,
                 toastShow: false,
                 toastMsg: '',
@@ -864,10 +902,57 @@
 
                 selectLead(lead) {
                     this.selectedLead = lead;
+                    this.isEditingName = false;
                     this.mobileDetailOpen = true;
                     window.scrollTo({ top: 0, behavior: 'instant' });
                     const rightPane = document.getElementById('rightDetailPane');
                     if (rightPane) rightPane.scrollTop = 0;
+                },
+
+                startEditName() {
+                    if (!this.selectedLead) return;
+                    this.editingNameValue = this.selectedLead.full_name || '';
+                    this.isEditingName = true;
+                    this.$nextTick(() => {
+                        const input = document.getElementById('customerNameInput');
+                        if (input) {
+                            input.focus();
+                            input.select();
+                        }
+                    });
+                },
+
+                async saveCustomerName() {
+                    if (!this.selectedLead) return;
+                    const newName = (this.editingNameValue || '').trim();
+                    this.isSavingName = true;
+                    try {
+                        const payload = {
+                            id: this.selectedLead.id,
+                            username: this.selectedLead.username,
+                            full_name: newName
+                        };
+
+                        const res = await fetch('/api/leads', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.selectedLead.full_name = newName;
+                            const found = this.leads.find(l => l.username === this.selectedLead.username);
+                            if (found) found.full_name = newName;
+                            this.isEditingName = false;
+                            this.showToast('Đã đổi tên khách hàng thành công!', 'success');
+                        } else {
+                            this.showToast(data.error || 'Lỗi cập nhật tên', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('Lỗi lưu tên: ' + e, 'error');
+                    } finally {
+                        this.isSavingName = false;
+                    }
                 },
 
                 backToList() {
@@ -926,6 +1011,7 @@
                         const payload = {
                             id: lead.id,
                             username: lead.username,
+                            full_name: lead.full_name,
                             sale_status: lead.sale_status,
                             sale_tag: lead.sale_tag,
                             sale_note: lead.sale_note,
@@ -941,6 +1027,15 @@
                         });
                         const data = await res.json();
                         if (data.success) {
+                            const found = this.leads.find(l => l.username === lead.username);
+                            if (found) {
+                                found.full_name = lead.full_name;
+                                found.sale_status = lead.sale_status;
+                                found.sale_tag = lead.sale_tag;
+                                found.sale_note = lead.sale_note;
+                                found.sale_assigned_to = lead.sale_assigned_to;
+                                found.follow_up_at = lead.follow_up_at;
+                            }
                             if (showFeedback) {
                                 this.showToast('Đã lưu tiến độ chăm sóc khách hàng thành công!', 'success');
                             }
